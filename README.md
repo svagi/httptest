@@ -1,5 +1,7 @@
 # httptest
 
+[![Circle CI](https://circleci.com/gh/svagi/httptest.svg?style=shield)](https://circleci.com/gh/svagi/httptest)
+
 ## Development
 
 ### Build
