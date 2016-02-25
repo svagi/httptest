@@ -9,4 +9,4 @@ dependencies:
 
 test:
   override:
-    - docker-compose run -t api npm test
+    - docker run -t api npm test
