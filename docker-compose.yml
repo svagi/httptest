@@ -1,0 +1,13 @@
+# Development configuration
+version: "2"
+
+services:
+  api:
+    build: ./api
+    container_name: api
+    volumes:
+      - ./api/src:/usr/src/app/src
+      - ./api/package.json:/usr/src/app/package.json
+    ports:
+      - "8080:8080"
+    command: npm run watch
