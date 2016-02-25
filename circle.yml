@@ -10,3 +10,9 @@ dependencies:
 test:
   override:
     - docker run -t api npm test
+
+deployment:
+  hub:
+    branch: master
+    commands:
+      - curl -X POST https://registry.hub.docker.com/u/svagi/httptest/trigger/$DOCKER_HUB_TOKEN/
