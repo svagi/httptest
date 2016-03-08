@@ -1,6 +1,9 @@
 import express from 'express'
+import expressValidator from 'express-validator'
 import morgan from 'morgan'
-import { version } from '../package.json'
+import bodyParser from 'body-parser'
+import { getProtocols } from './socket'
+import parseUrl from 'url-parse'
 
 export const app = express()
 const isProduction = app.get('env') !== 'development'
@@ -12,12 +15,45 @@ app.disable('x-powered-by')
 app.set('etag', 'strong')
 
 // Setup custom morgan format
-app.use(morgan(isProduction
-  ? '[:date[iso]] :method :url :status HTTP/:http-version :response-time ms - ":user-agent"'
-  : ' :method :url :status HTTP/:http-version :response-time ms - ":user-agent"'
-))
+app.use(morgan(isProduction ? '[:date[iso]] :method :url :status HTTP/:http-version :response-time ms - ":user-agent"' : ' :method :url :status HTTP/:http-version :response-time ms - ":user-agent"'))
+
+app.use(bodyParser.json())
+app.use(expressValidator({
+  customValidators: {
+    isArray: (value) => Array.isArray(value)
+  },
+  customSanitizers: {
+    toURL: (value) => parseUrl(value)
+  }
+}))
 
 // Routes
 app.get('/', (req, res) => {
-  res.send(`httptest ${version}`)
+  res.send('Hello')
+})
+
+app.get('/protocols', (req, res) => {
+  req.checkQuery('url').isURL({ protocols: ['http', 'https'] })
+  req.checkQuery('protocols').optional().isArray()
+  req.sanitizeQuery('url').toURL()
+  const errors = req.validationErrors()
+  if (errors) {
+    return res.status(400).send({ errors: errors })
+  } else {
+    return getProtocols(req.query.url.hostname, req.query.protocols)
+      .then((result) => res.send(result))
+  }
+})
+
+app.post('/protocols', (req, res) => {
+  req.checkQuery('url').isURL({ protocols: ['http', 'https'] })
+  req.sanitize('url').toURL()
+  req.check('protocols').optional().isArray()
+  const errors = req.validationErrors()
+  if (errors) {
+    return res.status(400).send({ errors: errors })
+  } else {
+    return getProtocols(req.body.url.hostname, req.body.protocols)
+      .then((result) => res.send(result))
+  }
 })
