@@ -1,7 +1,7 @@
 FROM svagi/phantomjs
 MAINTAINER Jan Svager <jan@svager.cz>
 ENV DEBIAN_FRONTEND='noninteractive' \
-  NODE_VERSION='5.7.0' \
+  NODE_VERSION='5.8.0' \
   OPENSSL_VERSION='1.0.2g' \
   INSTALL_DEPS='build-essential wget xz-utils' \
   RUNTIME_DEPS='ca-certificates'
