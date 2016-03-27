@@ -2,12 +2,6 @@ import test from 'ava'
 import request from 'supertest'
 import { app } from './app'
 
-test('GET / should return 200', (t) => {
-  return request(app)
-    .get('/')
-    .expect(200)
-})
-
 test('GET /protocols without url should return 400', (t) => {
   return request(app)
     .get('/protocols')
