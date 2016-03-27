@@ -2,12 +2,37 @@
 version: "2"
 
 services:
+  # HAR data container
+  har:
+    build: ./har
+    container_name: har
+    volumes:
+      - ./har/logs:/har/logs
+
+  # API server
   api:
     build: ./api
     container_name: api
+    environment:
+      API_PORT: 8080
+      API_HAR_DIR: /har/logs/
+      SELENIUM_BROWSER: firefox
+      SELENIUM_REMOTE_URL: http://firefox:4444/wd/hub
+    volumes_from:
+      - har
     volumes:
       - ./api/src:/usr/src/app/src
       - ./api/package.json:/usr/src/app/package.json
     ports:
       - "8080:8080"
     command: npm run watch
+
+  # Standalone selenium firefox server
+  firefox:
+    image: selenium/standalone-firefox-debug:2.52.0
+    volumes_from:
+      - har
+    expose:
+      - "4444"
+    ports:
+      - "5900:5900"
