@@ -21,6 +21,7 @@ export function generateHAR (url, opts = {}) {
     'app.update.enabled': false,
     'devtools.toolbar.enabled': true,
     'devtools.cache.disabled': true,
+    'browser.cache.check_doc_frequency': 1,
     'network.dnsCacheExpiration': 0,
     'devtools.netmonitor.enabled': true,
     'devtools.netmonitor.har.enableAutoExportToFile': true,
@@ -31,7 +32,7 @@ export function generateHAR (url, opts = {}) {
   })
   const watcher = watch(path.join(dir, id + ext))
   const driver = new webdriver.Builder()
-    .forBrowser('firefox', '45.1')
+    .forBrowser('firefox')
     .setFirefoxOptions(options)
     .build()
   return new Promise((resolve, reject) => {
@@ -55,7 +56,6 @@ export function generateHAR (url, opts = {}) {
       .then(resolve)
       // Clean up
       .then((har) => {
-        console.log('CLEAN')
         watcher.close()
         driver.quit()
       })
