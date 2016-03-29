@@ -33,6 +33,19 @@ services:
     expose:
       - "4444"
 
+  # Selenium node - chrome
+  chrome:
+    image: selenium/node-chrome:2.52.0
+    environment:
+      HUB_PORT_4444_TCP_ADDR: hub
+      HUB_PORT_4444_TCP_PORT: 4444
+    depends_on:
+      - hub
+    volumes:
+      - /dev/shm:/dev/shm
+    ports:
+      - "5900:5900"
+
   # Selenium node - firefox
   firefox:
     image: selenium/node-firefox:2.52.0
@@ -44,4 +57,4 @@ services:
     volumes_from:
       - data
     ports:
-      - "5900:5900"
+      - "5901:5900"
