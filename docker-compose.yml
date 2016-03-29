@@ -1,4 +1,8 @@
 # Development configuration
+# With VNC for visual debugging
+#  vnc://<docker-machine-ip>:<port>
+#  password=secret
+
 version: "2"
 
 services:
@@ -35,7 +39,7 @@ services:
 
   # Selenium node - chrome
   chrome:
-    image: selenium/node-chrome:2.52.0
+    image: selenium/node-chrome-debug:2.52.0
     environment:
       HUB_PORT_4444_TCP_ADDR: hub
       HUB_PORT_4444_TCP_PORT: 4444
@@ -48,7 +52,7 @@ services:
 
   # Selenium node - firefox
   firefox:
-    image: selenium/node-firefox:2.52.0
+    image: selenium/node-firefox-debug:2.52.0
     environment:
       HUB_PORT_4444_TCP_ADDR: hub
       HUB_PORT_4444_TCP_PORT: 4444
