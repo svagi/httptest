@@ -39,7 +39,7 @@ app.get('/har', (req, res) => {
   req.sanitizeQuery('url').toURL()
   const errors = req.validationErrors()
   if (errors) return res.status(400).send({ errors: errors })
-  return generateHAR(req.query.url.toString())
+  return generateHAR(req.query.url.toString(), { dir: process.env.API_DATA_DIR })
     // Send HAR as JSON response
     .then((data) => res.send(data))
     // Error handler

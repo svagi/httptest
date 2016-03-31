@@ -16,7 +16,7 @@ function createOptions (prefs) {
 }
 
 export function generateHAR (url, opts = {}) {
-  const { id = uuid.v4(), dir = process.env.API_HAR_DIR, ext = '.har' } = opts
+  const { id = uuid.v4(), dir = '/tmp', ext = '.har' } = opts
   const options = createOptions({
     'app.update.enabled': false,
     'devtools.toolbar.enabled': true,

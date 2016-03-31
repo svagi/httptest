@@ -6,26 +6,17 @@
 version: "2"
 
 services:
-  # Data container
-  data:
-    build: ./data
-    container_name: data
-    volumes:
-      - ./data/logs:/data/logs
-
   # API server
   api:
     build: ./api
     container_name: api
     environment:
       API_PORT: 8080
-      API_HAR_DIR: /data/logs/
       SELENIUM_REMOTE_URL: http://hub:4444/wd/hub
-    volumes_from:
-      - data
     volumes:
       - ./api/src:/usr/src/app/src
       - ./api/package.json:/usr/src/app/package.json
+      - ./api/data:/data
     ports:
       - "8080:8080"
     command: npm run watch
@@ -37,19 +28,6 @@ services:
     expose:
       - "4444"
 
-  # Selenium node - chrome
-  chrome:
-    image: selenium/node-chrome-debug:2.52.0
-    environment:
-      HUB_PORT_4444_TCP_ADDR: hub
-      HUB_PORT_4444_TCP_PORT: 4444
-    depends_on:
-      - hub
-    volumes:
-      - /dev/shm:/dev/shm
-    ports:
-      - "5900:5900"
-
   # Selenium node - firefox
   firefox:
     image: selenium/node-firefox-debug:2.52.0
@@ -59,6 +37,19 @@ services:
     depends_on:
       - hub
     volumes_from:
-      - data
+      - api
     ports:
       - "5901:5900"
+
+  # Selenium node - chrome
+  # chrome:
+  #   image: selenium/node-chrome-debug:2.52.0
+  #   environment:
+  #     HUB_PORT_4444_TCP_ADDR: hub
+  #     HUB_PORT_4444_TCP_PORT: 4444
+  #   depends_on:
+  #     - hub
+  #   volumes:
+  #     - /dev/shm:/dev/shm
+  #   ports:
+  #     - "5900:5900"
