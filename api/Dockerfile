@@ -15,7 +15,7 @@ RUN apt-get update \
  && mkdir -p /usr/src/app $API_DATA_DIR \
  && chmod -R 777 $API_DATA_DIR
 WORKDIR /usr/src/app
-VOLUME [$API_DATA_DIR]
+VOLUME ["$API_DATA_DIR"]
 COPY package.json /usr/src/app/
 RUN npm install --no-optional
 COPY ./src ./src
