@@ -1,0 +1,45 @@
+# Production configuration
+
+version: "2"
+
+services:
+  # API server
+  api:
+    image: svagi/httptest
+    restart: always
+    environment:
+      API_PORT: 8080
+      SELENIUM_REMOTE_URL: http://hub:4444/wd/hub
+    ports:
+      - "8080:8080"
+
+  # Reverse proxy server
+  nginx:
+    build: ./nginx
+    restart: always
+    depends_on:
+      - api
+    volumes:
+      - /var/www/letsencrypt
+    ports:
+      - "80:80"
+      - "443:443"
+
+  # Selenium hub
+  hub:
+    image: selenium/hub:2.52.0
+    restart: always
+    expose:
+      - "4444"
+
+  # Selenium node - firefox
+  firefox:
+    image: selenium/node-firefox:2.52.0
+    restart: always
+    environment:
+      HUB_PORT_4444_TCP_ADDR: hub
+      HUB_PORT_4444_TCP_PORT: 4444
+    depends_on:
+      - hub
+    volumes_from:
+      - api
