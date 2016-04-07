@@ -1,12 +1,12 @@
-import { readFile as readFileNode } from 'fs'
 import { watch } from 'chokidar'
 import firefox from 'selenium-webdriver/firefox'
+import fs from 'fs'
 import path from 'path'
 import Promise from 'bluebird'
 import uuid from 'node-uuid'
 import webdriver from 'selenium-webdriver'
 
-const readFile = Promise.promisify(readFileNode)
+const { readFileAsync, unlinkFileAsync } = Promise.promisifyAll(fs)
 
 function createOptions (prefs) {
   const profile = new firefox.Profile()
@@ -21,6 +21,12 @@ export function generateHAR (url, opts = {}) {
     'app.update.enabled': false,
     'devtools.toolbar.enabled': true,
     'devtools.cache.disabled': true,
+    'browser.sessionhistory.max_entries': 0,
+    'browser.sessionhistory.max_total_viewers': 0,
+    'browser.cache.memory.capacity': 0,
+    'browser.cache.disk.capacity': 0,
+    'browser.cache.disk.enable': false,
+    'browser.cache.memory.enable': false,
     'browser.cache.check_doc_frequency': 1,
     'network.dnsCacheExpiration': 0,
     'devtools.netmonitor.enabled': true,
@@ -30,7 +36,8 @@ export function generateHAR (url, opts = {}) {
     'devtools.netmonitor.har.defaultFileName': id,
     'devtools.netmonitor.har.defaultLogDir': dir
   })
-  const watcher = watch(path.join(dir, id + ext))
+  const filename = path.join(dir, id + ext)
+  const watcher = watch(filename)
   const driver = new webdriver.Builder()
     .forBrowser('firefox')
     .setFirefoxOptions(options)
@@ -51,13 +58,13 @@ export function generateHAR (url, opts = {}) {
         watcher.on('add', resolve).on('error', reject)
       }))
       // Read HAR from disk
-      .then(readFile)
+      .then(readFileAsync)
       // Resolve HAR
       .then(resolve)
-      // Clean up
-      .then((har) => {
+      .then(() => {
         watcher.close()
         driver.quit()
+        unlinkFileAsync(filename)
       })
       .catch(reject)
   })
