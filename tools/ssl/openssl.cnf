@@ -1,0 +1,32 @@
+# Generate self signed certificate with alternate names
+# Usage
+# openssl req \
+# -new \
+# -newkey rsa:2048 \
+# -sha1 \
+# -days 3650 \
+# -nodes \
+# -x509 \
+# -keyout ssl.key \
+# -out ssl.crt \
+# -config openssl.cnf
+
+[req]
+distinguished_name = req_distinguished_name
+x509_extensions = v3_req
+prompt = no
+
+[req_distinguished_name]
+CN = *.httptest.net
+
+[v3_req]
+keyUsage = keyEncipherment, dataEncipherment
+extendedKeyUsage = serverAuth
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = *.httptest.net
+DNS.2 = httptest.net
+DNS.3 = *.httptest.local
+DNS.4 = httptest.local
+IP.1 = 192.168.99.100
