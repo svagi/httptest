@@ -22,14 +22,24 @@ docker-compose run --rm api npm test
 
 ## Local SSL/TLS setup
 
-For local development over SSL/TLS there are several pre-bundled self signed certificates in `nginx/ssl/`.
-In order to resolve `httptest.local` address properly, you need to edit your `/etc/hosts` file. If you are using docker-machine, it should look something like this
+For local development over SSL/TLS there is a pre-bundled self signed
+certificate in `nginx/ssl/`.
+
+The certificate is issued for:
 ```
-192.168.99.100  httptest.local www.httptest.local
+*.httptest.net
+httptest.net
+*.httptest.local
+httptest.local
+192.168.99.100
 ```
 
-At this point browser probably start complain about self-signed certificates.
-Best way to solve this is to trust `nginx/ssl/*.crt` certificates at system level,
+Where `192.168.99.100` is IP of default docker-machine.
+
+Browser probably start complain about untrusted self-signed certificate.
+Best way to solve this is to trust `nginx/ssl/fullchain.crt` certificate at system level,
 which results in trusted icon (green lock) in any browser.
 
 ![trust](trust.png)
+
+See: https://gist.github.com/jed/6147872
