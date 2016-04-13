@@ -6,7 +6,7 @@ import Promise from 'bluebird'
 import uuid from 'node-uuid'
 import webdriver from 'selenium-webdriver'
 
-const { readFileAsync, unlinkFileAsync } = Promise.promisifyAll(fs)
+const { readFileAsync } = Promise.promisifyAll(fs)
 
 function createOptions (prefs) {
   const profile = new firefox.Profile()
@@ -34,9 +34,9 @@ export function generateHAR (url, opts = {}) {
     'devtools.netmonitor.har.includeResponseBodies': false,
     'devtools.netmonitor.har.pageLoadedTimeout': 100,
     'devtools.netmonitor.har.defaultFileName': id,
-    'devtools.netmonitor.har.defaultLogDir': dir
+    'devtools.netmonitor.har.defaultLogDir': path.join(dir, url.hostname)
   })
-  const filename = path.join(dir, id + ext)
+  const filename = path.join(dir, url.hostname, id + ext)
   const watcher = watch(filename)
   const driver = new webdriver.Builder()
     .forBrowser('firefox')
@@ -52,7 +52,7 @@ export function generateHAR (url, opts = {}) {
       .keyUp(webdriver.Key.CONTROL)
       .perform()
       // Open url
-      .then(() => driver.get(url))
+      .then(() => driver.get(url.toString()))
       // Wait for exported HAR file
       .then(() => new Promise((resolve, reject) => {
         watcher.on('add', resolve).on('error', reject)
@@ -64,7 +64,6 @@ export function generateHAR (url, opts = {}) {
       .then(() => {
         watcher.close()
         driver.quit()
-        unlinkFileAsync(filename)
       })
       .catch(reject)
   })
