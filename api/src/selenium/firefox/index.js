@@ -3,7 +3,6 @@ import firefox from 'selenium-webdriver/firefox'
 import fs from 'fs'
 import path from 'path'
 import Promise from 'bluebird'
-import uuid from 'node-uuid'
 import webdriver from 'selenium-webdriver'
 
 const { readFileAsync } = Promise.promisifyAll(fs)
@@ -15,8 +14,7 @@ function createOptions (prefs) {
   return new firefox.Options().setProfile(profile)
 }
 
-export function generateHAR (url, opts = {}) {
-  const { id = uuid.v4(), dir = '/tmp', ext = '.har' } = opts
+export function generateHAR ({ url, dir, id, ext }) {
   const options = createOptions({
     'app.update.enabled': false,
     'devtools.toolbar.enabled': true,
@@ -36,8 +34,8 @@ export function generateHAR (url, opts = {}) {
     'devtools.netmonitor.har.defaultFileName': id,
     'devtools.netmonitor.har.defaultLogDir': path.join(dir, url.hostname)
   })
-  const filename = path.join(dir, url.hostname, id + ext)
-  const watcher = watch(filename)
+  const filepath = path.join(dir, url.hostname, id + ext)
+  const watcher = watch(filepath)
   const driver = new webdriver.Builder()
     .forBrowser('firefox')
     .setFirefoxOptions(options)

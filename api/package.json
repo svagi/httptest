@@ -1,5 +1,5 @@
 {
-  "name": "httptest",
+  "name": "httptest-api",
   "version": "0.1.0",
   "description": "",
   "author": "Jan Svager <jan@svager.cz>",
@@ -9,15 +9,15 @@
     "type": "git",
     "url": "git+https://github.com/svagi/httptest.git"
   },
+  "bugs": {
+    "url": "https://github.com/svagi/httptest/issues"
+  },
   "keywords": [
     "http",
     "http/2",
     "HAR",
     "performance"
   ],
-  "bugs": {
-    "url": "https://github.com/svagi/httptest/issues"
-  },
   "main": "src/index.js",
   "standard": {
     "parser": "babel-eslint"
