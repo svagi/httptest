@@ -11,7 +11,7 @@ services:
     build: ./api
     container_name: api
     environment:
-      API_PORT: 8080
+      PORT: 8080
       SELENIUM_REMOTE_URL: http://hub:4444/wd/hub
     volumes:
       - ./api/src:/usr/src/app/src
@@ -21,12 +21,27 @@ services:
       - "8080:8080"
     command: npm run watch
 
+  # WWW server
+  www:
+    build: ./www
+    container_name: www
+    environment:
+      PORT: 9090
+    volumes:
+      - ./www/src:/usr/src/app/src
+      - ./www/package.json:/usr/src/app/package.json
+    ports:
+      - "9090:9090"
+    command: npm run watch
+
   # Reverse proxy server
   nginx:
     build: ./nginx
     container_name: nginx
     depends_on:
       - api
+    volumes:
+      - /etc/nginx/ssl
     ports:
       - "80:80"
       - "443:443"

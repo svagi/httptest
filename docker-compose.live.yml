@@ -8,10 +8,18 @@ services:
     image: svagi/httptest
     restart: always
     environment:
-      API_PORT: 8080
+      PORT: 8080
       SELENIUM_REMOTE_URL: http://hub:4444/wd/hub
     ports:
       - "8080:8080"
+
+  # WWW server
+  www:
+    build: ./www
+    environment:
+      PORT: 9090
+    ports:
+      - "9090:9090"
 
   # Reverse proxy server
   nginx:
