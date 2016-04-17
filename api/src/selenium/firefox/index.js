@@ -14,7 +14,7 @@ function createOptions (prefs) {
   return new firefox.Options().setProfile(profile)
 }
 
-export function generateHAR ({ url, dir, id, ext }) {
+export function generateHAR ({ url, hostname, dir, id, ext }) {
   const options = createOptions({
     'app.update.enabled': false,
     'devtools.toolbar.enabled': true,
@@ -32,9 +32,9 @@ export function generateHAR ({ url, dir, id, ext }) {
     'devtools.netmonitor.har.includeResponseBodies': false,
     'devtools.netmonitor.har.pageLoadedTimeout': 100,
     'devtools.netmonitor.har.defaultFileName': id,
-    'devtools.netmonitor.har.defaultLogDir': path.join(dir, url.hostname)
+    'devtools.netmonitor.har.defaultLogDir': path.join(dir, hostname)
   })
-  const filepath = path.join(dir, url.hostname, id + ext)
+  const filepath = path.join(dir, hostname, id + ext)
   const watcher = watch(filepath)
   const driver = new webdriver.Builder()
     .forBrowser('firefox')
@@ -50,7 +50,7 @@ export function generateHAR ({ url, dir, id, ext }) {
       .keyUp(webdriver.Key.CONTROL)
       .perform()
       // Open url
-      .then(() => driver.get(url.toString()))
+      .then(() => driver.get(url))
       // Wait for exported HAR file
       .then(() => new Promise((resolve, reject) => {
         watcher.on('add', resolve).on('error', reject)

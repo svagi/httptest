@@ -4,7 +4,7 @@ import bodyParser from 'body-parser'
 import express from 'express'
 import expressValidator from 'express-validator'
 import morgan from 'morgan'
-import parseUrl from 'url-parse'
+import url from 'url'
 import uuid from 'node-uuid'
 import http from 'http'
 
@@ -26,64 +26,81 @@ app.use(expressValidator({
     isArray: (value) => Array.isArray(value)
   },
   customSanitizers: {
-    toURL: (value) => {
-      const url = parseUrl(value)
-      url.protocol = url.protocol || 'https:'
-      return url
-    }
+    toURL: (value) => url.parse(value)
   }
 }))
 
+function webhook (options, payload) {
+  const data = JSON.stringify(payload)
+  return new Promise((resolve, reject) => {
+    const callback = http.request(options)
+    callback.on('error', reject)
+    callback.end(data, resolve)
+  })
+}
+
 // Routes
-app.post('/har', (req, res) => {
+app.post('/analyze', (req, res) => {
   // Validation
-  req.checkBody('url').isURL({ protocols: ['http', 'https'] })
-  req.checkBody('hook').isURL({ protocols: ['http', 'https'] })
+  req.checkBody('url').notEmpty()
+  req.checkBody('hook').notEmpty()
   req.sanitize('url').toURL()
   req.sanitize('hook').toURL()
   const errors = req.validationErrors()
   if (errors) {
-    return res.status(400).send({
-      success: false,
-      errors: errors
-    })
+    return res.status(400).send({ errors: errors })
   }
-  // Logic
+  // Send response with HAR ID immediately
+  const id = uuid.v4()
+  res.json({ id: id })
+  // Setup
   const { url, hook } = req.body
-  const config = {
-    url: url,
-    id: uuid.v4(),
+  const harOpts = {
+    url: url.href,
+    hostname: url.hostname,
+    id: id,
     dir: process.env.API_DATA_DIR,
     ext: '.har'
   }
-  const harPromise = generateHAR(config)
-  res.json({
-    success: true,
-    id: config.id
-  })
-  harPromise.then((har) => {
-    const callback = http.request({
-      method: 'POST',
-      host: hook.hostname,
-      port: hook.port,
-      path: hook.pathname,
-      headers: {
-        'Content-Type': 'application/json'
-      }
+  const hookOpts = {
+    method: 'POST',
+    host: hook.hostname,
+    port: hook.port,
+    path: hook.pathname,
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  }
+  // Start generating HAR file
+  generateHAR(harOpts)
+    .catch((err) => {
+      webhook(hookOpts, {
+        event: 'har:error',
+        data: {
+          id: id,
+          har: null,
+          error: err.message
+        }
+      })
     })
-    callback.on('error', (e) => {
-      console.log(`problem with request: ${e.message}`)
+    .then((harBuffer) => {
+      const har = JSON.parse(harBuffer.toString('utf8'))
+      webhook(hookOpts, {
+        event: 'har:complete',
+        data: {
+          id: id,
+          har: har,
+          error: null
+        }
+      })
     })
-    callback.write(har)
-    callback.end()
-  }).catch((err) => {
-    console.error(err)
-    res.status(500).send()
-  })
+    .catch((err) => {
+      console.error(err.stack)
+    })
 })
 
 app.get('/protocols', (req, res) => {
-  req.checkQuery('url').isURL({ protocols: ['http', 'https'] })
+  req.checkQuery('url').notEmpty()
   req.checkQuery('protocols').optional().isArray()
   req.sanitizeQuery('url').toURL()
   const errors = req.validationErrors()
@@ -96,7 +113,7 @@ app.get('/protocols', (req, res) => {
 })
 
 app.post('/protocols', (req, res) => {
-  req.checkQuery('url').isURL({ protocols: ['http', 'https'] })
+  req.checkQuery('url').notEmpty()
   req.sanitize('url').toURL()
   req.check('protocols').optional().isArray()
   const errors = req.validationErrors()
