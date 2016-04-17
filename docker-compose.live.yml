@@ -8,6 +8,7 @@ services:
     image: svagi/httptest
     restart: always
     environment:
+      NODE_ENV: 'production'
       PORT: 8080
       SELENIUM_REMOTE_URL: http://hub:4444/wd/hub
     expose:
@@ -20,6 +21,7 @@ services:
     volumes:
       - /www/static
     environment:
+      NODE_ENV: 'production'
       PORT: 9090
     expose:
       - "9090"

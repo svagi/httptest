@@ -1,28 +1,40 @@
 import React from 'react'
-import { Router, Route, match, RouterContext } from 'react-router'
+import { Route, IndexRoute, Redirect, RouterContext } from 'react-router'
+import { match } from 'react-router'
+import createHistory from 'react-router/lib/createMemoryHistory'
 import { renderToString, renderToStaticMarkup } from 'react-dom/server'
-import App from './pages/App'
+import Root from './pages/Root'
+import Index from './pages/Index'
 import Layout from './pages/Layout'
 
 export const routes = (
-<Router>
-  <Route path='/' component={App} />
-</Router>
+<Route path='/' component={Root}>
+  <IndexRoute component={Index} />
+  <Redirect from='*' to='/' />
+</Route>
 )
 
-export function renderMarkup ({ location='/', ...props }) {
+export function renderMarkup (props) {
+  const opts = {
+    history: createHistory(props.originalUrl),
+    routes: routes,
+    location: props.originalUrl
+  }
   return new Promise((resolve, reject) => {
-    match({ routes, location }, (error, redirect, routerProps) => {
+    match(opts, (error, redirect, routerProps) => {
       if (error) {
-        return reject(error)
+        console.log(error)
+        return reject({ error: error })
+      }
+      if (redirect) {
+        return resolve({ redirect: redirect })
       }
       return resolve({
-        redirect: redirect,
         routerProps: routerProps,
-        markup: renderToStaticMarkup(
-          <Layout {...props}>
-            {renderToString(<RouterContext {...routerProps} />)}
-          </Layout>
+        markup: '<!DOCTYPE html>' + renderToStaticMarkup(
+            <Layout {...props}>
+              {renderToString(<RouterContext {...routerProps} />)}
+            </Layout>
         )
       })
     })
