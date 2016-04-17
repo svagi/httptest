@@ -1,22 +1,25 @@
-import React from 'react'
-import { Route, IndexRoute, Redirect, RouterContext } from 'react-router'
 import { match } from 'react-router'
-import createHistory from 'react-router/lib/createMemoryHistory'
 import { renderToString, renderToStaticMarkup } from 'react-dom/server'
-import Root from './pages/Root'
+import Analyze from './pages/Analyze'
 import Index from './pages/Index'
+import IndexRoute from 'react-router/lib/IndexRoute'
 import Layout from './pages/Layout'
+import React from 'react'
+import Redirect from 'react-router/lib/Redirect'
+import Root from './pages/Root'
+import Route from 'react-router/lib/Route'
+import RouterContext from 'react-router/lib/RouterContext'
 
 export const routes = (
 <Route path='/' component={Root}>
   <IndexRoute component={Index} />
+  <Route path='analyze' component={Analyze} />
   <Redirect from='*' to='/' />
 </Route>
 )
 
 export function renderMarkup (props) {
   const opts = {
-    history: createHistory(props.originalUrl),
     routes: routes,
     location: props.originalUrl
   }

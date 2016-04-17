@@ -1,14 +1,15 @@
-import { Router, match, browserHistory } from 'react-router'
 import { render } from 'react-dom'
 import { routes } from './router'
+import history from './history'
+import match from 'react-router/lib/match'
 import React from 'react'
+import Router from 'react-router/lib/Router'
 
 const options = {
-  history: browserHistory,
+  history: history,
   routes: routes
 }
-match(options, (error, redirectLocation, renderProps) => {
-  console.log('RENDER')
+match(options, (error, redirect, renderProps) => {
   if (error) return
   render(<Router {...renderProps} />, document.getElementById('root'))
 })
