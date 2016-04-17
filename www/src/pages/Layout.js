@@ -9,9 +9,9 @@ export default class Layout extends React.Component {
       <title>
         {this.props.title}
       </title>
-      <link type='text/css' rel='stylesheet' href='static/pure.min.css' />
-      <link type='text/css' rel='stylesheet' href='static/app.css' />
-      <script async src='static/bundle.js' />
+      <link type='text/css' rel='stylesheet' href='/static/pure.min.css' />
+      <link type='text/css' rel='stylesheet' href='/static/app.css' />
+      <script async src='/static/bundle.js' />
     </head>
     <body>
       <div id='root' dangerouslySetInnerHTML={{ __html: this.props.children }} />
