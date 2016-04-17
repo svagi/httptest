@@ -14,8 +14,8 @@ services:
       PORT: 8080
       SELENIUM_REMOTE_URL: http://hub:4444/wd/hub
     volumes:
-      - ./api/src:/usr/src/app/src
-      - ./api/package.json:/usr/src/app/package.json
+      - ./api/src:/api/src
+      - ./api/package.json:/api/package.json
       - ./api/data:/data
     ports:
       - "8080:8080"
@@ -27,9 +27,13 @@ services:
     container_name: www
     environment:
       PORT: 9090
+      API_HOST: 'api'
+      API_PORT: 8080
+      API_PATH: '/har'
     volumes:
-      - ./www/src:/usr/src/app/src
-      - ./www/package.json:/usr/src/app/package.json
+      - ./www/src:/www/src
+      - ./www/static:/www/static
+      - ./www/package.json:/www/package.json
     ports:
       - "9090:9090"
     command: npm run watch
@@ -40,8 +44,9 @@ services:
     container_name: nginx
     depends_on:
       - api
-    volumes:
-      - /etc/nginx/ssl
+      - www
+    volumes_from:
+      - www
     ports:
       - "80:80"
       - "443:443"

@@ -1,0 +1,23 @@
+* {
+  box-sizing: border-box;
+}
+input {
+  padding: 10px;
+  border: solid 5px #c9c9c9;
+  transition: border 0.3s;
+}
+input:focus {
+  border: solid 5px #969696;
+  outline: none;
+}
+input[type='url']:valid {
+  border-color: #7abf73
+}
+input[type='submit'] {
+  color: #4ea2da;
+  border: solid 5px #4ea2da;
+  background-color: #ffffff;
+}
+input[type='submit']:hover {
+  border: solid 5px #1f8dd6;
+}
