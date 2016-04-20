@@ -75,23 +75,22 @@ app.post('/analyze', (req, res) => {
   generateHAR(harOpts)
     .catch((err) => {
       webhook(hookOpts, {
-        event: 'har:error',
-        data: {
-          id: id,
-          har: null,
-          error: err.message
-        }
+        id: id,
+        event: 'analysis:error',
+        host: url.hostname,
+        success: false,
+        har: null,
+        error: err.message
       })
     })
-    .then((harBuffer) => {
-      const har = JSON.parse(harBuffer.toString('utf8'))
+    .then((har) => {
       webhook(hookOpts, {
-        event: 'har:complete',
-        data: {
-          id: id,
-          har: har,
-          error: null
-        }
+        id: id,
+        event: 'analysis:done',
+        host: url.hostname,
+        success: !!har,
+        har: har,
+        error: null
       })
     })
     .catch((err) => {

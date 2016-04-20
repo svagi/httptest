@@ -1,4 +1,5 @@
 import React, { PropTypes } from 'react'
+import Link from 'react-router/lib/Link'
 
 const style = {
   wrapper: {
@@ -13,6 +14,12 @@ const style = {
     display: 'inline-block',
     padding: '.5em 0',
     margin: 0
+  },
+  link: {
+    color: '#fff'
+  },
+  section: {
+    paddingTop: '1em'
   }
 }
 
@@ -26,10 +33,12 @@ export default class Root extends React.Component {
     <div>
       <header style={style.header}>
         <div style={style.wrapper}>
+          <Link to='/' style={style.link}>
           <h1 style={style.h1}>httptest</h1>
+          </Link>
         </div>
       </header>
-      <section>
+      <section style={style.section}>
         <div style={style.wrapper}>
           {this.props.children}
         </div>

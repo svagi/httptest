@@ -30,16 +30,17 @@ export function generateHAR ({ url, hostname, dir, id, ext }) {
     'devtools.netmonitor.enabled': true,
     'devtools.netmonitor.har.enableAutoExportToFile': true,
     'devtools.netmonitor.har.includeResponseBodies': false,
-    'devtools.netmonitor.har.pageLoadedTimeout': 100,
+    'devtools.netmonitor.har.pageLoadedTimeout': 1500,
     'devtools.netmonitor.har.defaultFileName': id,
     'devtools.netmonitor.har.defaultLogDir': path.join(dir, hostname)
   })
   const filepath = path.join(dir, hostname, id + ext)
-  const watcher = watch(filepath)
+  const watcher = watch(filepath, { usePolling: true })
   const driver = new webdriver.Builder()
     .forBrowser('firefox')
     .setFirefoxOptions(options)
     .build()
+  let timeoutId
   return new Promise((resolve, reject) => {
     driver.actions()
       // Open devtools with ctrl+shift+q (needed for HAR export)
@@ -49,18 +50,28 @@ export function generateHAR ({ url, hostname, dir, id, ext }) {
       .keyUp(webdriver.Key.SHIFT)
       .keyUp(webdriver.Key.CONTROL)
       .perform()
-      // Open url
-      .then(() => driver.get(url))
-      // Wait for exported HAR file
       .then(() => new Promise((resolve, reject) => {
+        // Wait for exported HAR file
         watcher.on('add', resolve).on('error', reject)
+        // Open url
+        driver.get(url).then(() => {
+          timeoutId = setTimeout(() => {
+            reject(new Error('Watch timeout'))
+            watcher.close()
+            driver.close()
+            driver.quit()
+          }, 10000) // 10s
+        })
       }))
       // Read HAR from disk
-      .then(readFileAsync)
+      .then((path) => readFileAsync(path, 'utf-8'))
+      .then(JSON.parse)
       // Resolve HAR
       .then(resolve)
       .then(() => {
+        clearTimeout(timeoutId)
         watcher.close()
+        driver.close()
         driver.quit()
       })
       .catch(reject)

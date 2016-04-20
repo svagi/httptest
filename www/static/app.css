@@ -10,9 +10,6 @@ input:focus {
   border: solid 5px #969696;
   outline: none;
 }
-input[type='url']:valid {
-  border-color: #7abf73
-}
 input[type='submit'] {
   color: #4ea2da;
   border: solid 5px #4ea2da;

@@ -47,7 +47,8 @@
     "react-router": "2.0.1",
     "react": "15.0.1",
     "style-loader": "0.13.1",
-    "webpack": "1.13.0"
+    "webpack": "1.13.0",
+    "valid-url": "1.0.9"
   },
   "devDependencies": {
     "nodemon": "^1.9.1"

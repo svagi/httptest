@@ -2,8 +2,8 @@ FROM node:5.10.1-slim
 MAINTAINER Jan Svager <jan@svager.cz>
 # Data
 ENV API_DATA_DIR /data
+RUN mkdir -p $API_DATA_DIR && chmod -R 777 $API_DATA_DIR
 VOLUME $API_DATA_DIR
-RUN chmod -R 777 $API_DATA_DIR
 # Source
 WORKDIR /api
 COPY package.json .

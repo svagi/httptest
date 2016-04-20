@@ -31,7 +31,6 @@ services:
       PORT: 9090
       API_HOST: 'api'
       API_PORT: 8080
-      API_PATH: '/har'
     volumes:
       - ./www/src:/www/src
       - ./www/static:/www/static

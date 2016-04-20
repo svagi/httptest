@@ -1,8 +1,8 @@
 import React from 'react'
+import history from '../history'
 
 const style = {
   form: {
-    paddingTop: '1em',
     display: 'flex',
     alignContent: 'stretch',
     width: '100%'
@@ -21,13 +21,21 @@ const style = {
 export default class Index extends React.Component {
   constructor (props) {
     super(props)
+    this.handleSubmit = this.handleSubmit.bind(this)
   }
-
+  handleSubmit (e) {
+    e.preventDefault()
+    history.push({
+      pathname: '/analyze/',
+      search: `?url=${this.refs.url.value}`
+    })
+  }
   render () {
     return (
     <div>
-      <form style={style.form}>
+      <form style={style.form} onSubmit={this.handleSubmit}>
         <input
+          ref='url'
           type='url'
           style={style.inputUrl}
           name='url'
