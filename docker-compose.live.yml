@@ -6,7 +6,7 @@ services:
   # API server
   api:
     image: svagi/httptest
-    restart: always
+    restart: on-failure:5
     environment:
       NODE_ENV: 'production'
       PORT: 8080
@@ -17,7 +17,7 @@ services:
   # WWW server
   www:
     build: ./www
-    restart: always
+    restart: on-failure:5
     volumes:
       - /www/static
     environment:
@@ -32,7 +32,7 @@ services:
   # Reverse proxy server
   nginx:
     build: ./nginx
-    restart: always
+    restart: on-failure:5
     depends_on:
       - api
       - www
@@ -47,14 +47,14 @@ services:
   # Selenium hub
   hub:
     image: selenium/hub:2.53.0
-    restart: always
+    restart: on-failure:5
     expose:
       - "4444"
 
   # Selenium node - firefox
   firefox:
     image: selenium/node-firefox:2.53.0
-    restart: always
+    restart: on-failure:5
     environment:
       HUB_PORT_4444_TCP_ADDR: hub
       HUB_PORT_4444_TCP_PORT: 4444
