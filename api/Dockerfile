@@ -1,4 +1,4 @@
-FROM node:5.10.1-slim
+FROM node:5.11.0-slim
 MAINTAINER Jan Svager <jan@svager.cz>
 # Data
 ENV API_DATA_DIR /data
