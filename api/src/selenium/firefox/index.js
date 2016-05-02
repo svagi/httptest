@@ -58,8 +58,8 @@ export function generateHAR ({ url, hostname, dir, id, ext }) {
           timeoutId = setTimeout(() => {
             reject(new Error('Watch timeout'))
             watcher.close()
-            driver.close()
-            driver.quit()
+            driver.close().catch(reject)
+            driver.quit().catch(reject)
           }, 10000) // 10s
         })
       }))
@@ -71,8 +71,8 @@ export function generateHAR ({ url, hostname, dir, id, ext }) {
       .then(() => {
         clearTimeout(timeoutId)
         watcher.close()
-        driver.close()
-        driver.quit()
+        driver.close().catch(reject)
+        driver.quit().catch(reject)
       })
       .catch(reject)
   })

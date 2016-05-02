@@ -73,16 +73,6 @@ app.post('/analyze', (req, res) => {
   }
   // Start generating HAR file
   generateHAR(harOpts)
-    .catch((err) => {
-      webhook(hookOpts, {
-        id: id,
-        event: 'analysis:error',
-        host: url.hostname,
-        success: false,
-        har: null,
-        error: err.message
-      })
-    })
     .then((har) => {
       webhook(hookOpts, {
         id: id,
@@ -94,7 +84,14 @@ app.post('/analyze', (req, res) => {
       })
     })
     .catch((err) => {
-      console.error(err.stack)
+      webhook(hookOpts, {
+        id: id,
+        event: 'analysis:error',
+        host: url.hostname,
+        success: false,
+        har: null,
+        error: err.message
+      })
     })
 })
 
