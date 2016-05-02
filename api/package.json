@@ -30,7 +30,7 @@
     "build": "babel src -d build",
     "lint": "standard --verbose src/*",
     "start": "npm run build && node build/index.js",
-    "test": "npm run lint && ava --require 'babel-register' -v src/**/*.test.js",
+    "test": "ava --require 'babel-register' -v src/**/*.test.js",
     "watch": "nodemon -L --watch src/ --exec babel-node src/index.js"
   },
   "dependencies": {
