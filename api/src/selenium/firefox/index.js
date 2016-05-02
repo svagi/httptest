@@ -41,6 +41,7 @@ export function generateHAR ({ url, hostname, dir, id, ext }) {
     .setFirefoxOptions(options)
     .build()
   let timeoutId
+  let perf = {}
   return new Promise((resolve, reject) => {
     driver.actions()
       // Open devtools with ctrl+shift+q (needed for HAR export)
@@ -54,20 +55,30 @@ export function generateHAR ({ url, hostname, dir, id, ext }) {
         // Wait for exported HAR file
         watcher.on('add', resolve).on('error', reject)
         // Open url
-        driver.get(url).then(() => {
-          timeoutId = setTimeout(() => {
-            reject(new Error('Watch timeout'))
-            watcher.close()
-            driver.close().catch(reject)
-            driver.quit().catch(reject)
-          }, 10000) // 10s
-        })
+        driver.get(url)
+          .then(() => {
+            timeoutId = setTimeout(() => {
+              reject(new Error('Watch timeout'))
+              watcher.close()
+              driver.close().catch(reject)
+              driver.quit().catch(reject)
+            }, 10000) // 10s
+          })
+          .then(() => driver.executeScript(() => window.performance.timing.toJSON()))
+          .then((data) => perf = data)
+          .catch(reject)
       }))
       // Read HAR from disk
       .then((path) => readFileAsync(path, 'utf-8'))
       .then(JSON.parse)
       // Resolve HAR
-      .then(resolve)
+      .then(har => {
+        // Fix DOM and window loading times
+        const pageTimings = har.log.pages[0].pageTimings
+        pageTimings.onContentLoad = perf.domContentLoadedEventStart - perf.navigationStart
+        pageTimings.onLoad = perf.loadEventStart - perf.navigationStart
+        return resolve(har)
+      })
       .then(() => {
         clearTimeout(timeoutId)
         watcher.close()
