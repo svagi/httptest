@@ -7,6 +7,7 @@ import morgan from 'morgan'
 import url from 'url'
 import uuid from 'node-uuid'
 import http from 'http'
+import analyze from './analysis/analyze'
 
 export const app = express()
 const isProduction = app.get('env') !== 'development'
@@ -78,7 +79,7 @@ app.post('/analyze', (req, res) => {
         id: id,
         event: 'analysis:done',
         host: url.hostname,
-        success: !!har,
+        analysis: analyze(har),
         har: har,
         error: null
       })
@@ -88,7 +89,6 @@ app.post('/analyze', (req, res) => {
         id: id,
         event: 'analysis:error',
         host: url.hostname,
-        success: false,
         har: null,
         error: err.message
       })
