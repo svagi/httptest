@@ -99,6 +99,7 @@ app.get('/sub', (req, res) => {
 app.post('/pub', (req, res) => {
   const data = req.body
   const prevRes = app.locals.sse[data.id]
+  console.log(data)
   if (prevRes) {
     prevRes.write('id: ' + data.id + '\n')
     prevRes.write('event: ' + data.event + '\n')

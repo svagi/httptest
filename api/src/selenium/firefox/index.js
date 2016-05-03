@@ -1,14 +1,13 @@
-import { watch } from 'chokidar'
+/* global window, HAR */
 import firefox from 'selenium-webdriver/firefox'
-import fs from 'fs'
 import path from 'path'
 import Promise from 'bluebird'
 import webdriver from 'selenium-webdriver'
-
-const { readFileAsync } = Promise.promisifyAll(fs)
+import fs from 'fs'
 
 function createOptions (prefs) {
   const profile = new firefox.Profile()
+  profile.addExtension('/api/src/selenium/firefox/harexporttrigger-0.5.0-beta.8.xpi')
   Object.keys(prefs)
     .forEach((pref) => profile.setPreference(pref, prefs[pref]))
   return new firefox.Options().setProfile(profile)
@@ -32,59 +31,67 @@ export function generateHAR ({ url, hostname, dir, id, ext }) {
     'devtools.netmonitor.har.includeResponseBodies': false,
     'devtools.netmonitor.har.pageLoadedTimeout': 1500,
     'devtools.netmonitor.har.defaultFileName': id,
-    'devtools.netmonitor.har.defaultLogDir': path.join(dir, hostname)
+    'devtools.netmonitor.har.defaultLogDir': path.join(dir, hostname),
+    'extensions.netmonitor.har.contentAPIToken': 'httptest',
+    'extensions.netmonitor.har.enableAutomation': true,
+    'extensions.netmonitor.har.autoConnect': true
   })
-  const filepath = path.join(dir, hostname, id + ext)
-  const watcher = watch(filepath, { usePolling: true })
   const driver = new webdriver.Builder()
     .forBrowser('firefox')
     .setFirefoxOptions(options)
     .build()
-  let timeoutId
-  let perf = {}
   return new Promise((resolve, reject) => {
-    driver.actions()
-      // Open devtools with ctrl+shift+q (needed for HAR export)
-      .keyDown(webdriver.Key.CONTROL)
-      .keyDown(webdriver.Key.SHIFT)
-      .sendKeys('q')
-      .keyUp(webdriver.Key.SHIFT)
-      .keyUp(webdriver.Key.CONTROL)
-      .perform()
+    driver.manage().timeouts().setScriptTimeout(10000)
+      .then(() => driver.manage().window().maximize())
+      .then(() => driver.get(url))
       .then(() => new Promise((resolve, reject) => {
-        // Wait for exported HAR file
-        watcher.on('add', resolve).on('error', reject)
-        // Open url
-        driver.get(url)
-          .then(() => {
-            timeoutId = setTimeout(() => {
-              reject(new Error('Watch timeout'))
-              watcher.close()
-              driver.close().catch(reject)
-              driver.quit().catch(reject)
-            }, 10000) // 10s
+        function asyncScript () {
+          var done = arguments[arguments.length - 1]
+          var opts = {
+            token: 'httptest',
+            getData: true,
+            title: arguments[0]
+          }
+          function triggerExport () {
+            return HAR.triggerExport(opts)
+              .then(function (result) {
+                var har = JSON.parse(result.data)
+                var perf = window.performance.timing.toJSON()
+                var pageTimings = har.log.pages[0].pageTimings
+                pageTimings.onContentLoad = perf.domContentLoadedEventStart - perf.navigationStart
+                pageTimings.onLoad = perf.loadEventStart - perf.navigationStart
+                done(har)
+              })
+              .catch(done)
+          }
+          if (typeof HAR === 'undefined') {
+            window.addEventListener('har-api-ready', triggerExport, false)
+          } else {
+            triggerExport()
+          }
+        }
+        driver.executeAsyncScript(asyncScript, hostname)
+          .then(resolve)
+          .catch(() => {
+            console.log(`/data/${hostname}/${id}.har`)
+            fs.readFile(`/data/${hostname}/${id}.har`, 'utf-8', (err, data) => {
+              if (!err) {
+                resolve(JSON.parse(data))
+              } else {
+                reject(err)
+              }
+            })
           })
-          .then(() => driver.executeScript(() => window.performance.timing.toJSON()))
-          .then((data) => perf = data)
-          .catch(reject)
       }))
-      // Read HAR from disk
-      .then((path) => readFileAsync(path, 'utf-8'))
-      .then(JSON.parse)
-      // Resolve HAR
-      .then(har => {
-        // Fix DOM and window loading times
-        const pageTimings = har.log.pages[0].pageTimings
-        pageTimings.onContentLoad = perf.domContentLoadedEventStart - perf.navigationStart
-        pageTimings.onLoad = perf.loadEventStart - perf.navigationStart
-        return resolve(har)
-      })
+      .then(resolve)
       .then(() => {
-        clearTimeout(timeoutId)
-        watcher.close()
-        driver.close().catch(reject)
-        driver.quit().catch(reject)
+        driver.close()
+        driver.quit()
       })
-      .catch(reject)
+      .catch((err) => {
+        driver.close()
+        driver.quit()
+        reject(err)
+      })
   })
 }
