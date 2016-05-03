@@ -1,5 +1,6 @@
 import React, { PropTypes } from 'react'
 import history from '../history'
+import Analysis from '../components/Analysis'
 
 const STATUS = {
   LOADING: { msg: 'Loading...' },
@@ -50,25 +51,18 @@ export default class Analyze extends React.Component {
     })
   }
 
-  renderAnalysis (props) {
-    return (
-    <div>
-      <span>Requests:&nbsp;{props.har.log.entries.length}&nbsp;</span>
-    </div>
-    )
-  }
-
   contentSwitch (status, props) {
-    switch (STATUS) {
+    switch (status) {
       case STATUS.DONE:
-        return this.renderAnalysis(props)
+        console.log('DONE')
+        return <Analysis {...props}/>
       default:
         return ''
     }
   }
 
-  render () {
-    const { url } = this.props.location.query
+  render (props = this.props) {
+    const { url } = props.location.query
     const { status, data } = this.state
     return (
     <div>
@@ -77,9 +71,7 @@ export default class Analyze extends React.Component {
       <div>
         <span>Status:&nbsp;{status.msg}</span>
       </div>
-      <div>
-        {this.contentSwitch(status, data)}
-      </div>
+      {this.contentSwitch(status, data)}
     </div>
     )
   }
