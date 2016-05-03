@@ -1,5 +1,6 @@
 import { app } from './app'
 
-const server = app.listen(process.env.PORT, () => {
+const PORT = parseInt(process.env.PORT, 10)
+const server = app.listen(PORT, () => {
   console.log('Server running on port ' + server.address().port)
 })
