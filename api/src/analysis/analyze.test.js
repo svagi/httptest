@@ -1,59 +1,106 @@
 import test from 'ava'
-import fs from 'fs'
-import analyze, { convertHeaders } from './analyze'
+import analyze from './analyze'
+import { domains, mapDatasets } from './datasets'
 
-const har = JSON.parse(fs.readFileSync('./datasets/seznam.cz.har', 'utf-8'))
-const analysis = {
-  'seznam.cz': analyze(har)
-}
+const analysis = mapDatasets(analyze)
 
-test('analysis is object', (t) => {
-  t.is(typeof analysis['seznam.cz'], 'object')
+// All domains
+test('[all] analysis is object', (t) => {
+  domains.forEach((domain) => {
+    t.is(typeof analysis['http://seznam.cz'], 'object')
+  })
 })
 
-test('convert array headers to object headers', (t) => {
-  const arrayHeaders = har.log.entries[0].request.headers
-  const objectHeaders = convertHeaders(arrayHeaders)
-  t.is(typeof objectHeaders, 'object')
-  t.is(arrayHeaders.length, Object.keys(objectHeaders).length)
+test('[all] stats as property of analysis is object', (t) => {
+  domains.forEach((domain) => {
+    t.is(typeof analysis['http://seznam.cz'].stats, 'object')
+  })
 })
 
-test('stats as property of analysis is object', (t) => {
-  const { stats } = analysis['seznam.cz']
-  t.is(typeof stats, 'object')
+test('[all] stats.totalRequests is number greater or equeal to zero', (t) => {
+  domains.forEach((domain) => {
+    t.true(analysis['http://seznam.cz'].stats.totalRequests >= 0)
+  })
 })
 
-test('stats.totalRequests is number greater or equeal to zero', (t) => {
-  const { stats } = analysis['seznam.cz']
-  t.true(stats.totalRequests >= 0)
+test('[all] stats.totalRedirects is number greater or equeal to zero', (t) => {
+  domains.forEach((domain) => {
+    t.true(analysis['http://seznam.cz'].stats.totalRedirects >= 0)
+  })
 })
 
-test('stats.totalRedirects is number greater or equeal to zero', (t) => {
-  const { stats } = analysis['seznam.cz']
-  t.true(stats.totalRedirects >= 0)
+test('[all] stats.isLandingRedirected property is boolean', (t) => {
+  domains.forEach((domain) => {
+    t.is(typeof analysis['http://seznam.cz'].stats.isLandingRedirected, 'boolean')
+  })
 })
 
-test('stats.http2Requests is number greater or equeal to zero', (t) => {
-  const { stats } = analysis['seznam.cz']
-  t.true(stats.http2Requests >= 0)
+test('[all] stats.isLandingHttp2 property is boolean', (t) => {
+  domains.forEach((domain) => {
+    t.is(typeof analysis['http://seznam.cz'].stats.isLandingHttp2, 'boolean')
+  })
 })
 
-test('stats.totalBytes is number greater or equeal to zero', (t) => {
-  const { stats } = analysis['seznam.cz']
-  t.true(stats.totalBytes >= 0)
+test('[all] stats.http2Requests is number greater or equeal to zero', (t) => {
+  domains.forEach((domain) => {
+    t.true(analysis['http://seznam.cz'].stats.http2Requests >= 0)
+  })
 })
 
-test('stats.domLoadTime is number greater or equeal to zero', (t) => {
-  const { stats } = analysis['seznam.cz']
-  t.true(stats.domLoadTime >= 0)
+test('[all] stats.totalBytes is number greater or equeal to zero', (t) => {
+  domains.forEach((domain) => {
+    t.true(analysis['http://seznam.cz'].stats.totalBytes >= 0)
+  })
 })
 
-test('stats.loadTime is number greater or equeal to zero', (t) => {
-  const { stats } = analysis['seznam.cz']
-  t.true(stats.loadTime >= 0)
+test('[all] stats.domLoadTime is number greater or equeal to zero', (t) => {
+  domains.forEach((domain) => {
+    t.true(analysis['http://seznam.cz'].stats.domLoadTime >= 0)
+  })
 })
 
-test('stats.domains is array', (t) => {
-  const { stats } = analysis['seznam.cz']
-  t.true(Array.isArray(stats.domains))
+test('[all] stats.loadTime is number greater or equeal to zero', (t) => {
+  domains.forEach((domain) => {
+    t.true(analysis['http://seznam.cz'].stats.loadTime >= 0)
+  })
+})
+
+test('[all] stats.domains is array', (t) => {
+  domains.forEach((domain) => {
+    t.true(Array.isArray(analysis['http://seznam.cz'].stats.allDomains))
+  })
+})
+
+// Only http://seznam.cz
+test('[http://seznam.cz] stats.totalRequests is 69', (t) => {
+  t.is(analysis['http://seznam.cz'].stats.totalRequests, 69)
+})
+
+test('[http://seznam.cz] stats.totalRedirects is 1', (t) => {
+  t.is(analysis['http://seznam.cz'].stats.totalRedirects, 1)
+})
+
+test('[http://seznam.cz] stats.isLandingRedirected is true', (t) => {
+  t.true(analysis['http://seznam.cz'].stats.isLandingRedirected)
+})
+
+test('[http://seznam.cz] stats.isLandingHttp2 is false', (t) => {
+  t.false(analysis['http://seznam.cz'].stats.isLandingHttp2)
+})
+
+// Only http://svager.cz
+test('[http://svager.cz] stats.totalRequests is 5', (t) => {
+  t.is(analysis['http://svager.cz'].stats.totalRequests, 5)
+})
+
+test('[http://svager.cz] stats.totalRedirects is 1', (t) => {
+  t.is(analysis['http://svager.cz'].stats.totalRedirects, 1)
+})
+
+test('[http://svager.cz] stats.isLandingRedirected is true', (t) => {
+  t.true(analysis['http://svager.cz'].stats.isLandingRedirected)
+})
+
+test('[http://svager.cz] stats.isLandingHttp2 is false', (t) => {
+  t.true(analysis['http://svager.cz'].stats.isLandingHttp2)
 })

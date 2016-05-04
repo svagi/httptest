@@ -54,7 +54,6 @@ export default class Analyze extends React.Component {
   contentSwitch (status, props) {
     switch (status) {
       case STATUS.DONE:
-        console.log('DONE')
         return <Analysis {...props}/>
       default:
         return ''

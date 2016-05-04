@@ -1,81 +1,123 @@
-// Convert headers from array to object
-export function convertHeaders (arrayHeaders) {
-  return arrayHeaders.reduce((objHeaders, header) => {
-    objHeaders[header['name'].toLowerCase()] = header['value']
-    return objHeaders
-  }, {})
-}
+import * as rules from './rules'
+import { convertHeaders } from './helpers'
 
-export default function (har) {
-  const stats = {
-    totalRequests: har.log.entries.length,
-    totalRedirects: 0,
-    http2Requests: 0,
-    totalBytes: 0,
-    domLoadTime: 0,
-    loadTime: 0,
-    domains: new Set()
-  }
-  let page = har.log.pages[0]
+export default function ({ log = {} }) {
+  const { pages = [], entries = [] } = log
+  let totalRedirects = 0
+  let http2Requests = 0
+  let totalBytes = 0
+  let domLoadTime = 0
+  let loadTime = 0
+  let allDomains = new Set()
+  let page = pages[0]
+  let htmlRedirect = false
+  let htmlEntry = entries[0]
+  let connections = []
 
-  har.log.entries.forEach((entry) => {
+  entries.forEach((entry, idx) => {
     const req = entry.request
     const res = entry.response
+    const status = res.status
+    const isHttp2 = /HTTP\/2/.test(res.httpVersion)
     const reqHeaders = convertHeaders(req.headers)
+    const resHeaders = convertHeaders(res.headers)
+    // const contentType = resHeaders['content-type']
 
-    // Add all host names to set
-    stats.domains.add(reqHeaders['host'])
-
-    // Total number of redirects
-    if ([301, 302, 307].indexOf(res.status) > -1) {
-      stats.totalRedirects += 1
+    // Capture all HTTP/2 requests
+    if (isHttp2) {
+      http2Requests += 1
     }
 
-    // Total number of HTTP/2 requests
-    const httpVersion = res.httpVersion
-    if (httpVersion && /HTTP\/2/.test(httpVersion)) {
-      stats.http2Requests += 1
+    // Capture all domains
+    allDomains.add(reqHeaders['host'])
+
+    // Capture all redirects
+    if ([301, 302, 307].indexOf(status) > -1) {
+      totalRedirects += 1
+      const nextEntry = entries[idx + 1]
+      if (nextEntry) {
+        const nextEntryResHeaders = convertHeaders(nextEntry.response.headers)
+        const nextEntryIsHtml = /text\/html/.test(nextEntryResHeaders['content-type'])
+        if (nextEntry.response.status === 200 && nextEntryIsHtml) {
+          htmlRedirect = true
+          htmlEntry = nextEntry
+        }
+      }
     }
 
     // Calculate byte size of all requests
     const { headersSize, bodySize } = res
     if (headersSize > 0) {
-      stats.totalBytes += headersSize
+      totalBytes += headersSize
     }
     if (bodySize > 0) {
-      stats.totalBytes += bodySize
+      totalBytes += bodySize
     }
     // Calculate page load time by maximum entry time
     const { startedDateTime, time } = entry
     const entryTime = new Date(startedDateTime).getTime() + time
-    if (stats.loadTime < entryTime) {
-      stats.loadTime = entryTime
+    if (loadTime < entryTime) {
+      loadTime = entryTime
+    }
+
+    connections[idx] = {
+      isHttp2: isHttp2,
+      status: status,
+      bodySize: res.bodySize,
+      resHeaders: resHeaders
     }
   })
 
-  // Convert domains to array
-  stats.domains = [...stats.domains]
+  const stats = {
+    // Total number of requests
+    totalRequests: entries.length,
 
-  // Convert loadTime [datetime] to milisecods subtracting page.startedDateTime
-  stats.loadTime -= new Date(page.startedDateTime).getTime()
+    // Total number of redirects
+    totalRedirects: totalRedirects,
 
-  // Set page timings from performance.timing if exists
-  if (page.pageTimings.onContentLoad > 0) {
-    stats.domLoadTime = page.pageTimings.onContentLoad
-  }
-  if (page.pageTimings.onLoad > 0) {
-    stats.loadTime = page.pageTimings.onLoad
-  }
-  if (stats.domLoadTime === -1) {
-    stats.domLoadTime = undefined
-  }
-  if (stats.loadTime === -1) {
-    stats.loadTime = undefined
+    // Check if landing html page is redirected
+    isLandingRedirected: htmlRedirect,
+
+    // Check if landing html page is HTTP/2
+    isLandingHttp2: /HTTP\/2/.test(htmlEntry.response.httpVersion),
+
+    // Number of http2 requests
+    http2Requests: http2Requests,
+
+    // Total number of bytes (overall size)
+    totalBytes: totalBytes,
+
+    // DOM load time
+    // Set page timings from performance.timing if exists
+    domLoadTime: page.pageTimings.onLoad > 0
+      ? page.pageTimings.onContentLoad
+      : domLoadTime,
+
+    // Full page load time
+    // Set page timings from performance.timing if exists
+    loadTime: page.pageTimings.onLoad > 0
+      ? page.pageTimings.onLoad
+      // Convert loadTime [datetime] to milisecods
+      : loadTime - new Date(page.startedDateTime).getTime(),
+
+    // Array of all requested domains
+    // Convert domains to array
+    allDomains: [...allDomains]
   }
 
-  console.log(stats)
-
-  return {
-    stats: stats
+  // Analysis object
+  const analysis = {
+    stats: stats,
+    rules: {
+      useHttp2: rules.useHttp2(connections),
+      reduceDNSlookups: rules.reduceDNSlookups(stats),
+      reduceRedirects: rules.reduceRedirects(stats),
+      reuseTCPconnections: rules.reuseTCPconnections(stats, connections),
+      eliminateNotFoundRequests: rules.eliminateNotFoundRequests(connections),
+      useCaching: rules.useCaching(connections),
+      useCompression: rules.useCompression(connections)
+    }
   }
+  console.log(analysis)
+  return analysis
 }
