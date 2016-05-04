@@ -43,6 +43,10 @@ export default class Analysis extends React.Component {
           <span style={style.score}>{stats.totalRequests}</span>
         </div>
         <div style={style.rule}>
+          <span style={style.title}>DNS lookups</span>
+          <span style={style.score}>{stats.dnsLookups}</span>
+        </div>
+        <div style={style.rule}>
           <span style={style.title}>Time to first Byte (TTFB)</span>
           <span style={style.score}>{stats.timeToFirstByte ? <span>{stats.timeToFirstByte / 1000} s</span> : '-'}</span>
         </div>

@@ -68,6 +68,9 @@ export default function ({ log = {} }) {
     }
   })
 
+  // Convert domains to array
+  allDomains = [...allDomains]
+
   const stats = {
     // Total number of requests
     totalRequests: entries.length,
@@ -101,11 +104,13 @@ export default function ({ log = {} }) {
       : loadTime - new Date(page.startedDateTime).getTime(),
 
     // Array of all requested domains
-    // Convert domains to array
-    allDomains: [...allDomains],
+    allDomains: allDomains,
 
     // TTFB
-    timeToFirstByte: htmlEntry.time
+    timeToFirstByte: htmlEntry.time,
+
+    // DNS resolution lookups
+    dnsLookups: allDomains.length
   }
 
   // Analysis object

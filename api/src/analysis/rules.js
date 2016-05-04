@@ -1,8 +1,9 @@
 import { normalizeScore } from './helpers'
 
 export function reduceDNSlookups (stats, opts = {}) {
-  const { limit = 4, penalty = 5 } = opts
-  const count = stats.allDomains.length
+  const { limit = 2, penalty = 5 } = opts
+  const count = stats.dnsLookups
+
   // TODO reduce limit for HTTP2?
   let score = 100
   if (count > limit) {
@@ -28,7 +29,7 @@ export function reuseTCPconnections (stats, connections, opts = {}) {
     const headers = conn.resHeaders
     return !(headers['connection'] !== 'close')
   }).length
-  const limit = stats.allDomains.length
+  const limit = stats.dnsLookups
   let score = 100
   if (count > limit) {
     score -= (penalty * (count - limit))
