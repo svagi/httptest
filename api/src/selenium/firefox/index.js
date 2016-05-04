@@ -83,15 +83,14 @@ export function generateHAR ({ url, hostname, dir, id, ext }) {
             })
           })
       }))
+      // On success resolve HAR object
       .then(resolve)
-      .then(() => {
+      // On failure reject with error
+      .catch(reject)
+      // Finnaly close browser window and quit session
+      .thenFinally(() => {
         driver.close()
         driver.quit()
-      })
-      .catch((err) => {
-        driver.close()
-        driver.quit()
-        reject(err)
       })
   })
 }
