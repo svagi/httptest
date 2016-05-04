@@ -109,7 +109,7 @@ export function useHttp2 (connections, opts = {}) {
   }).length
   const score = 100 - penalty * count
   return {
-    title: 'Use HTTP/2 instead of HTTP/1',
+    title: 'Use HTTP/2 for all recources',
     score: normalizeScore(score),
     description: ''
   }

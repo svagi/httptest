@@ -102,7 +102,10 @@ export default function ({ log = {} }) {
 
     // Array of all requested domains
     // Convert domains to array
-    allDomains: [...allDomains]
+    allDomains: [...allDomains],
+
+    // TTFB
+    timeToFirstByte: htmlEntry.time
   }
 
   // Analysis object
