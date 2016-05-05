@@ -118,7 +118,7 @@ export default function ({ log = {} }) {
     stats: stats,
     rules: {
       useHttp2: rules.useHttp2(connections),
-      reduceDNSlookups: rules.reduceDNSlookups(stats),
+      reduceDNSlookups: rules.reduceDNSlookups(allDomains),
       reduceRedirects: rules.reduceRedirects(stats),
       reuseTCPconnections: rules.reuseTCPconnections(stats, connections),
       eliminateNotFoundRequests: rules.eliminateNotFoundRequests(connections),

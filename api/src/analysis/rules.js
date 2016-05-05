@@ -1,8 +1,8 @@
 import { normalizeScore } from './helpers'
 
-export function reduceDNSlookups (stats, opts = {}) {
+export function reduceDNSlookups (domains, opts = {}) {
   const { limit = 2, penalty = 5 } = opts
-  const count = stats.dnsLookups
+  const count = domains.length
 
   // TODO reduce limit for HTTP2?
   let score = 100
@@ -12,6 +12,7 @@ export function reduceDNSlookups (stats, opts = {}) {
   return {
     title: 'Reduce DNS lookups',
     score: normalizeScore(score),
+    values: domains,
     description: 'Making requests to a large number of different hosts can hurt performance.'
   }
 }
@@ -110,7 +111,7 @@ export function useHttp2 (connections, opts = {}) {
   }).length
   const score = 100 - penalty * count
   return {
-    title: 'Use HTTP/2 for all recources',
+    title: 'Use HTTP/2 for all resources',
     score: normalizeScore(score),
     description: ''
   }

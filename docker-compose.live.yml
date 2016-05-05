@@ -37,8 +37,6 @@ services:
       - www
     volumes_from:
       - www
-    volumes:
-      - /var/www/letsencrypt
     ports:
       - "80:80"
       - "443:443"
