@@ -1,5 +1,5 @@
 import React, { PropTypes } from 'react'
-import history from '../history'
+import { history } from './router'
 import Analysis from '../components/Analysis'
 
 const STATUS = {

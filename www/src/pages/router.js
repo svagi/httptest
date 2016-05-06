@@ -1,14 +1,20 @@
 import { match } from 'react-router'
 import { renderToString, renderToStaticMarkup } from 'react-dom/server'
-import Analyze from './pages/Analyze'
-import Index from './pages/Index'
+import history from 'react-router/lib/browserHistory'
 import IndexRoute from 'react-router/lib/IndexRoute'
-import Layout from './pages/Layout'
 import React from 'react'
 import Redirect from 'react-router/lib/Redirect'
-import Root from './pages/Root'
 import Route from 'react-router/lib/Route'
 import RouterContext from 'react-router/lib/RouterContext'
+
+// Pages
+import Analyze from './Analyze'
+import Index from './Index'
+import Layout from './Layout'
+import Root from './Root'
+
+// Export browser history
+export { history }
 
 export const routes = (
 <Route path='/' component={Root}>

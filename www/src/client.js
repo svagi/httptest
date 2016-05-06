@@ -1,6 +1,5 @@
 import { render } from 'react-dom'
-import { routes } from './router'
-import history from './history'
+import { routes, history } from './pages/router'
 import match from 'react-router/lib/match'
 import React from 'react'
 import Router from 'react-router/lib/Router'
