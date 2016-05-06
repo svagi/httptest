@@ -39,10 +39,10 @@ services:
       - "9090:9090"
     command: npm run watch
 
-  # Reverse proxy server
-  nginx:
-    build: ./nginx
-    container_name: nginx
+  # Reverse proxy server Nginx
+  proxy:
+    build: ./proxy
+    container_name: proxy
     depends_on:
       - api
       - www

@@ -28,9 +28,9 @@ services:
     expose:
       - "9090"
 
-  # Reverse proxy server
-  nginx:
-    build: ./nginx
+  # Reverse proxy server Nginx
+  proxy:
+    build: ./proxy
     restart: on-failure:5
     depends_on:
       - api
