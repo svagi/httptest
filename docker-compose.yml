@@ -35,6 +35,7 @@ services:
       - ./www/src:/www/src
       - ./www/static:/www/static
       - ./www/package.json:/www/package.json
+      - ./www/webpack.config.js:/www/webpack.config.js
     ports:
       - "9090:9090"
     command: npm run watch

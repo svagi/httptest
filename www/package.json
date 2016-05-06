@@ -26,7 +26,7 @@
   "scripts": {
     "babel:build": "babel src -d build",
     "nodemon:watch": "nodemon -L --watch src/ --exec babel-node src/server.js",
-    "webpack:build": "webpack --config src/webpack.config.js --colors",
+    "webpack:build": "webpack --colors",
     "webpack:watch": "npm run webpack:build -- --watch",
     "start": "npm run babel:build && npm run webpack:build && node build/server.js",
     "watch": "npm run nodemon:watch & npm run webpack:watch"
