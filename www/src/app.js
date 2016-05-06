@@ -109,7 +109,6 @@ app.post('/pub', (req, res) => {
 })
 
 app.get('*', (req, res) => {
-  console.log('req.url: ', req.originalUrl)
   // TODO react-helmet for titles (https://github.com/nfl/react-helmet)
   const opts = {
     originalUrl: req.originalUrl,
@@ -120,6 +119,14 @@ app.get('*', (req, res) => {
       if (redirect) {
         res.redirect(302, redirect.pathname + redirect.search)
       } else {
+        // Server push hints (supported by cloudflare-nginx)
+        // https://w3c.github.io/preload/
+        // TODO move logic somewhere else?
+        res.header('Link', [
+          '</static/pure.min.css>; rel=preload; as=style;',
+          '</static/app.css>; rel=preload; as=style;',
+          '</static/bundle.js>; rel=preload; as=script;'
+        ])
         res.status(200).send(markup)
       }
     })
