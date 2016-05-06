@@ -10,7 +10,7 @@ import RouterContext from 'react-router/lib/RouterContext'
 // Pages
 import Analyze from './Analyze'
 import Index from './Index'
-import Layout from './Layout'
+import Html from './Html'
 import Root from './Root'
 
 // Export browser history
@@ -41,9 +41,9 @@ export function renderMarkup (props) {
       return resolve({
         routerProps: routerProps,
         markup: '<!DOCTYPE html>' + renderToStaticMarkup(
-            <Layout {...props}>
-              {renderToString(<RouterContext {...routerProps} />)}
-            </Layout>
+            <Html {...props}>
+            {renderToString(<RouterContext {...routerProps} />)}
+            </Html>
         )
       })
     })

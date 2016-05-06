@@ -1,11 +1,10 @@
 import React, { PropTypes } from 'react'
 
-export default class Layout extends React.Component {
+export default class Html extends React.Component {
   render () {
     return (
     <html>
     <head>
-      <meta charSet='utf-8' />
       <title>
         {this.props.title}
       </title>
@@ -21,7 +20,7 @@ export default class Layout extends React.Component {
   }
 }
 
-Layout.propTypes = {
+Html.propTypes = {
   children: PropTypes.node.isRequired,
   title: PropTypes.string.isRequired
 }
