@@ -18,10 +18,7 @@ app.set('etag', 'strong')
 // Setup custom morgan format
 app.use(morgan(isProduction ? '[:date[iso]] :method :url :status HTTP/:http-version :response-time ms - ":user-agent"' : ' :method :url :status HTTP/:http-version :response-time ms - ":user-agent"'))
 
-// Setup default JSON body parser and increase maximum limit
-app.use(bodyParser.json({ limit: '20mb' }))
-
-function createAnalyzeRequest (url) {
+function createAnalysisRequest (url) {
   const opts = {
     method: 'POST',
     host: process.env.API_HOST,
@@ -50,60 +47,83 @@ function createAnalyzeRequest (url) {
     })
     request.end(JSON.stringify({
       url: url,
-      hook: `http://www:${process.env.PORT}/pub`
+      hook: `http://www:${process.env.PORT}/pubsub`
     }))
   })
 }
 
+// Global object of SSE connections
 app.locals.sse = {}
 
-// API subscriber
-app.get('/sub', (req, res) => {
-  const url = isWebUri(req.query.url)
-  if (!url) {
-    return res.status(400).end()
-  }
-  createAnalyzeRequest(url)
-    .then((payload) => {
-      const id = payload.id
-      console.log('SSE: Creating', id)
+// Setup default body parser and increase maximum limit
+app.use('/pubsub', bodyParser.text({ type: 'application/json', limit: '20mb' }))
+
+// Custom middleware for SSE emit extension
+app.use('/pubsub', (req, res, next) => {
+  res.sse = {
+    getConnection: function (id) {
+      return app.locals.sse[id]
+    },
+    setConnection: function (id) {
+      app.locals.sse[id] = res
+    },
+    open: function (id, opts = { ping: 30000 }) {
+      this.setConnection(id)
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
         'X-Accel-Buffering': 'no' // turn off proxy buffering
       })
-      app.locals.sse[id] = res
+      this.interval = setInterval(() => this.emit(id, 'ping'), opts.ping)
       res.on('close', () => {
-        console.log('SSE: Deleting', id)
-        delete app.locals.sse[id]
+        this.close(id)
       })
-      res.intervalId = setInterval(() => {
-        res.write('id: ' + id + '\n')
-        res.write('event: ping\n')
-        res.write('data: \n\n')
-      }, 30000) // 30s
+    },
+    emit: function (id, event, data = '') {
+      console.log('SSE: emit ->', event)
       res.write('id: ' + id + '\n')
-      res.write('event: analysis:start\n')
-      res.write('data: \n\n')
-    // keep connection open
+      if (event) res.write('event:' + event + '\n')
+      res.write('data:' + data + '\n\n')
+    },
+    close: function (id) {
+      console.log('SSE: close ->', id)
+      clearInterval(this.interval)
+      delete app.locals.sse[id]
+    }
+  }
+  next()
+})
+
+// API subscriber
+app.get('/pubsub', (req, res) => {
+  const url = isWebUri(req.query.url)
+  if (!url) {
+    return res.status(400).end()
+  }
+  createAnalysisRequest(url)
+    // on success keep SSE connection open
+    .then(({ id }) => {
+      res.sse.open(id)
+      res.sse.emit(id, 'analysis:start')
     })
+    // on failure close SSE connection
     .catch((err) => {
       console.log(err.message)
-      // close connection
       res.status(500).end()
     })
 })
 
 // API publisher
-app.post('/pub', (req, res) => {
-  const data = req.body
-  const prevRes = app.locals.sse[data.id]
-  console.log(data)
-  if (prevRes) {
-    prevRes.write('id: ' + data.id + '\n')
-    prevRes.write('event: ' + data.event + '\n')
-    prevRes.write('data: ' + JSON.stringify(data) + '\n\n')
+app.post('/pubsub', (req, res) => {
+  const id = req.get('Last-Event-ID')
+  if (!id) {
+    res.status(400).end()
+  }
+  const event = req.get('Last-Event')
+  const connRes = res.sse.getConnection(id)
+  if (connRes) {
+    connRes.sse.emit(id, event, req.body)
   }
   res.end()
 })

@@ -24,7 +24,7 @@ export default class Analyze extends React.Component {
   componentDidMount () {
     const { url } = this.props.location.query
     if (!url) return history.push('/')
-    this.source = new window.EventSource(`/sub?url=${url}`)
+    this.source = new window.EventSource(`/pubsub?url=${url}`)
     this.source.addEventListener('open', (e) => {
       this.setState({
         isFetching: true,

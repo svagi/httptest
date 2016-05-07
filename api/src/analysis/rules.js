@@ -77,7 +77,6 @@ export function useCaching (connections, opts = {}) {
   if (missing > limit) {
     score -= (penalty * (missing - limit))
   }
-  console.log(missing)
   return {
     title: 'Cache resources on the client',
     score: normalizeScore(score),

@@ -126,6 +126,5 @@ export default function ({ log = {} }) {
       useCompression: rules.useCompression(connections)
     }
   }
-  console.log(analysis)
   return analysis
 }

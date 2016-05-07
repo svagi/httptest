@@ -69,15 +69,15 @@ app.post('/analyze', (req, res) => {
     port: hook.port,
     path: hook.pathname,
     headers: {
+      'Last-Event-ID': id,
       'Content-Type': 'application/json'
     }
   }
   // Start generating HAR file
   generateHAR(harOpts)
     .then((har) => {
+      hookOpts.headers['Last-Event'] = 'analysis:done'
       webhook(hookOpts, {
-        id: id,
-        event: 'analysis:done',
         host: url.hostname,
         analysis: analyze(har),
         har: har,
@@ -85,10 +85,10 @@ app.post('/analyze', (req, res) => {
       })
     })
     .catch((err) => {
+      hookOpts.headers['Last-Event'] = 'analysis:error'
       webhook(hookOpts, {
-        id: id,
-        event: 'analysis:error',
         host: url.hostname,
+        analysis: null,
         har: null,
         error: err.message
       })

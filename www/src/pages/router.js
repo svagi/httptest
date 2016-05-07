@@ -49,7 +49,7 @@ export function renderServerRoute (props) {
       return resolve({
         routerProps: routerProps,
         html: '<!DOCTYPE html>' + renderToStaticMarkup(
-            <Html {...props}>
+            <Html title='httptest.net' {...props}>
             {renderToString(<RouterContext {...routerProps} />)}
             </Html>
         )
