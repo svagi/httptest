@@ -1,4 +1,4 @@
-import { renderMarkup } from './pages/router'
+import { renderServerRoute } from './pages/router'
 import bodyParser from 'body-parser'
 import express from 'express'
 import http from 'http'
@@ -109,13 +109,8 @@ app.post('/pub', (req, res) => {
 })
 
 app.get('*', (req, res) => {
-  // TODO react-helmet for titles (https://github.com/nfl/react-helmet)
-  const opts = {
-    originalUrl: req.originalUrl,
-    title: 'httptest'
-  }
-  renderMarkup(opts)
-    .then(({ redirect, markup }) => {
+  renderServerRoute({ location: req.originalUrl })
+    .then(({ redirect, html }) => {
       if (redirect) {
         res.redirect(302, redirect.pathname + redirect.search)
       } else {
@@ -127,7 +122,7 @@ app.get('*', (req, res) => {
           '</static/app.css>; rel=preload; as=style;',
           '</static/bundle.js>; rel=preload; as=script;'
         ])
-        res.status(200).send(markup)
+        res.status(200).send(html)
       }
     })
     .catch((err) => {
