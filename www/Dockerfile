@@ -1,4 +1,4 @@
-FROM node:6.0.0-slim
+FROM node:6.1.0-slim
 MAINTAINER Jan Svager <jan@svager.cz>
 # Source
 WORKDIR /www
