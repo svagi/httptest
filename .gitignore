@@ -1,2 +1,2 @@
 api/data/*
-www/static/bundle*
+www/static/*.bundle.*

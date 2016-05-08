@@ -13,11 +13,20 @@ var commonPlugins = [
       NODE_ENV: JSON.stringify(env)
     }
   }),
-  new ExtractTextPlugin('bundle.css', { allChunks: true })
+  new ExtractTextPlugin('app.bundle.css', { allChunks: true }),
+  new webpack.optimize.CommonsChunkPlugin({
+    name: 'react',
+    filename: 'react.bundle.js'
+  }),
+  new webpack.optimize.CommonsChunkPlugin({
+    names: [''],
+    filename: 'init.bundle.js',
+    minChunks: Infinity
+  })
 ]
 var productionPlugins = [
-  new webpack.optimize.OccurenceOrderPlugin(),
   new webpack.optimize.DedupePlugin(),
+  new webpack.optimize.AggressiveMergingPlugin(),
   new webpack.optimize.UglifyJsPlugin({
     comments: false,
     compress: {
@@ -35,11 +44,12 @@ var productionPlugins = [
 module.exports = {
   devtool: isProduction ? 'cheap-module-source-map' : 'eval',
   entry: {
-    bundle: '/www/src/client.js'
+    app: '/www/src/client.js',
+    react: ['react', 'react-dom', 'react-router']
   },
   output: {
     path: '/www/static',
-    filename: 'bundle.js'
+    filename: '[name].bundle.js'
   },
   watchOptions: {
     poll: true // needed for watching in docker
