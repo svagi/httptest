@@ -22,6 +22,7 @@ export default class Analyze extends React.Component {
   }
 
   componentDidMount () {
+    require('./Analyze.css')
     const { url } = this.props.location.query
     if (!url) return history.push('/')
     this.source = new window.EventSource(`/pubsub?url=${url}`)
@@ -64,12 +65,10 @@ export default class Analyze extends React.Component {
     const { url } = props.location.query
     const { status, data } = this.state
     return (
-    <div>
-      <h2>Analysis</h2>
-      <h3>{url}</h3>
-      <div>
-        <span>Status:&nbsp;{status.msg}</span>
-      </div>
+    <div id='analysis'>
+      <h2>Performance analysis of</h2>
+      <h3><a href={url} target='_blank'>{url}</a></h3>
+      <h4>Status:&nbsp;{status.msg}</h4>
       {this.contentSwitch(status, data)}
     </div>
     )
