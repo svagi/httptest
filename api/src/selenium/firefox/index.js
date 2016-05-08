@@ -14,33 +14,33 @@ function createOptions (prefs) {
 }
 
 export function generateHAR ({ url, hostname, dir, id, ext }) {
-  const options = createOptions({
-    'app.update.enabled': false,
-    'devtools.toolbar.enabled': true,
-    'devtools.cache.disabled': true,
-    'browser.sessionhistory.max_entries': 0,
-    'browser.sessionhistory.max_total_viewers': 0,
-    'browser.cache.memory.capacity': 0,
-    'browser.cache.disk.capacity': 0,
-    'browser.cache.disk.enable': false,
-    'browser.cache.memory.enable': false,
-    'browser.cache.check_doc_frequency': 1,
-    'network.dnsCacheExpiration': 0,
-    'devtools.netmonitor.enabled': true,
-    'devtools.netmonitor.har.enableAutoExportToFile': true,
-    'devtools.netmonitor.har.includeResponseBodies': false,
-    'devtools.netmonitor.har.pageLoadedTimeout': 1500,
-    'devtools.netmonitor.har.defaultFileName': id,
-    'devtools.netmonitor.har.defaultLogDir': path.join(dir, hostname),
-    'extensions.netmonitor.har.contentAPIToken': 'httptest',
-    'extensions.netmonitor.har.enableAutomation': true,
-    'extensions.netmonitor.har.autoConnect': true
-  })
-  const driver = new webdriver.Builder()
-    .forBrowser('firefox')
-    .setFirefoxOptions(options)
-    .build()
   return new Promise((resolve, reject) => {
+    const options = createOptions({
+      'app.update.enabled': false,
+      'devtools.toolbar.enabled': true,
+      'devtools.cache.disabled': true,
+      'browser.sessionhistory.max_entries': 0,
+      'browser.sessionhistory.max_total_viewers': 0,
+      'browser.cache.memory.capacity': 0,
+      'browser.cache.disk.capacity': 0,
+      'browser.cache.disk.enable': false,
+      'browser.cache.memory.enable': false,
+      'browser.cache.check_doc_frequency': 1,
+      'network.dnsCacheExpiration': 0,
+      'devtools.netmonitor.enabled': true,
+      'devtools.netmonitor.har.enableAutoExportToFile': true,
+      'devtools.netmonitor.har.includeResponseBodies': false,
+      'devtools.netmonitor.har.pageLoadedTimeout': 1500,
+      'devtools.netmonitor.har.defaultFileName': id,
+      'devtools.netmonitor.har.defaultLogDir': path.join(dir, hostname),
+      'extensions.netmonitor.har.contentAPIToken': 'httptest',
+      'extensions.netmonitor.har.enableAutomation': true,
+      'extensions.netmonitor.har.autoConnect': true
+    })
+    const driver = new webdriver.Builder()
+      .forBrowser('firefox')
+      .setFirefoxOptions(options)
+      .build()
     driver.manage().timeouts().setScriptTimeout(10000)
       .then(() => driver.manage().window().maximize())
       .then(() => driver.get(url))
