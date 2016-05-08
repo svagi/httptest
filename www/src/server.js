@@ -139,7 +139,7 @@ app.get('*', (req, res) => {
         // TODO move logic somewhere else?
         res.header('Link', [
           '</static/pure.min.css>; rel=preload; as=style;',
-          '</static/app.css>; rel=preload; as=style;',
+          '</static/bundle.css>; rel=preload; as=style;',
           '</static/bundle.js>; rel=preload; as=script;'
         ])
         res.status(200).send(html)

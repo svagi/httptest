@@ -1,5 +1,7 @@
 var webpack = require('webpack')
 var autoprefixer = require('autoprefixer')
+var CompressionPlugin = require('compression-webpack-plugin')
+var ExtractTextPlugin = require('extract-text-webpack-plugin')
 var env = process.env.NODE_ENV
 var isProduction = env === 'production'
 console.log('Building for ' + env + '...')
@@ -10,13 +12,20 @@ var commonPlugins = [
       BROWSER: JSON.stringify(true),
       NODE_ENV: JSON.stringify(env)
     }
-  })
+  }),
+  new ExtractTextPlugin('bundle.css', { allChunks: true })
 ]
 var productionPlugins = [
   new webpack.optimize.OccurenceOrderPlugin(),
   new webpack.optimize.DedupePlugin(),
   new webpack.optimize.UglifyJsPlugin({
     compress: { warnings: false }
+  }),
+  new CompressionPlugin({
+    asset: '[path].gz[query]',
+    algorithm: 'gzip',
+    test: /\.js$|\.html|\.css$/,
+    threshold: 256
   })
 ]
 
@@ -48,7 +57,7 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        loaders: ['style', 'css', 'postcss']
+        loader: ExtractTextPlugin.extract('style', 'css', 'postcss')
       }
     ]
   }

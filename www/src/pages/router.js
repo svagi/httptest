@@ -9,11 +9,11 @@ import Route from 'react-router/lib/Route'
 import Router from 'react-router/lib/Router'
 import RouterContext from 'react-router/lib/RouterContext'
 
-// Pages
-import Analyze from './Analyze'
-import Index from './Index'
+// Pages - order of imports matter because of css imports!
 import Html from './Html'
 import Root from './Root'
+import Index from './Index'
+import Analyze from './Analyze'
 
 // Export browser history
 export { history }

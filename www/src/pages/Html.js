@@ -9,7 +9,7 @@ export default class Html extends React.Component {
         {this.props.title}
       </title>
       <link type='text/css' rel='stylesheet' href='/static/pure.min.css' />
-      <link type='text/css' rel='stylesheet' href='/static/app.css' />
+      <link type='text/css' rel='stylesheet' href='/static/bundle.css' />
       <script async src='/static/bundle.js' />
     </head>
     <body>

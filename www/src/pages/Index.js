@@ -23,6 +23,11 @@ export default class Index extends React.Component {
     super(props)
     this.handleSubmit = this.handleSubmit.bind(this)
   }
+
+  componentDidMount () {
+    require('./Index.css')
+  }
+
   handleSubmit (e) {
     e.preventDefault()
     history.push({

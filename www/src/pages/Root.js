@@ -28,6 +28,10 @@ export default class Root extends React.Component {
     super(props)
   }
 
+  componentDidMount () {
+    require('./Root.css')
+  }
+
   render () {
     return (
     <div>
