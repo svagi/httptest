@@ -25,6 +25,10 @@ const style = {
   }
 }
 
+function mapRules (rules, fn) {
+  return Object.keys(rules).map((key, idx) => fn(rules[key], key, idx))
+}
+
 export default class Analysis extends React.Component {
   constructor (props) {
     super(props)
@@ -67,10 +71,10 @@ export default class Analysis extends React.Component {
         Recommendation
       </header>
       <div style={style.box}>
-        {Object.keys(rules).map((key) => (
+        {mapRules(rules, ({ title, score }, key) => (
            <div style={style.rule} key={key}>
-             <span style={style.title}>{rules[key].title}</span>
-             <span style={style.score}>{rules[key].score}/100</span>
+             <span style={style.title}>{title}</span>
+             <span style={style.score}>{score === null ? '-' : `${score}/100`}</span>
            </div>
          ))}
       </div>

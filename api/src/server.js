@@ -86,6 +86,7 @@ app.post('/analyze', (req, res) => {
       })
     })
     .catch((err) => {
+      console.error(err)
       hookOpts.headers['Last-Event'] = 'analysis:error'
       webhook(hookOpts, {
         host: url.hostname,

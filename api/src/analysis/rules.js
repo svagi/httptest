@@ -103,15 +103,20 @@ export function useCompression (connections, opts = {}) {
     description: 'Application resources should be transferred with the minimum number of bytes. Always apply the best compression method for each transferred asset.'
   }
 }
-export function useHttp2 (connections, opts = {}) {
-  const { penalty = 5 } = opts
-  const count = connections.filter((conn) => {
-    return (conn.status === 200 || conn.status === 304) && !conn.isHttp2
-  }).length
-  const score = 100 - penalty * count
+
+export function useServerPush (stats, connections, opts = {}) {
+  const { minSize = 30000, penalty = 5 } = opts
+  const contentTypeRegex = /text\/(?:css|javascript)|application\/javascript/
+  const entries = connections.filter((conn) => {
+    return conn.isHttp2 &&
+    conn.bodySize < minSize &&
+    !conn.status === 0 &&
+    !contentTypeRegex.test(conn.reqHeaders['accept'])
+  })
+  const score = 100 - (penalty * entries.length)
   return {
-    title: 'Use HTTP/2 for all resources',
-    score: normalizeScore(score),
+    title: 'Use server push for small assets',
+    score: normalizeScore(stats.isLandingHttp2 && score),
     description: ''
   }
 }

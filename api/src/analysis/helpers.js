@@ -9,6 +9,7 @@ export function convertHeaders (arrayHeaders) {
 // Normalize score value
 export function normalizeScore (score, opts = {}) {
   const { min = 0, max = 100 } = opts
+  if (!Number.isInteger(score)) return null
   if (score < min) score = min
   if (score > max) score = max
   return score

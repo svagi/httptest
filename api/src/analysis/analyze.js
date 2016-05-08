@@ -64,6 +64,7 @@ export default function ({ log = {} }) {
       isHttp2: isHttp2,
       status: status,
       bodySize: res.bodySize,
+      reqHeaders: reqHeaders,
       resHeaders: resHeaders
     }
   })
@@ -117,7 +118,7 @@ export default function ({ log = {} }) {
   const analysis = {
     stats: stats,
     rules: {
-      useHttp2: rules.useHttp2(connections),
+      useServerPush: rules.useServerPush(stats, connections),
       reduceDNSlookups: rules.reduceDNSlookups(allDomains),
       reduceRedirects: rules.reduceRedirects(stats),
       reuseTCPconnections: rules.reuseTCPconnections(stats, connections),
