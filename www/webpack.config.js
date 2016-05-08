@@ -19,7 +19,10 @@ var productionPlugins = [
   new webpack.optimize.OccurenceOrderPlugin(),
   new webpack.optimize.DedupePlugin(),
   new webpack.optimize.UglifyJsPlugin({
-    compress: { warnings: false }
+    comments: false,
+    compress: {
+      warnings: false
+    }
   }),
   new CompressionPlugin({
     asset: '[path].gz[query]',
@@ -31,9 +34,9 @@ var productionPlugins = [
 
 module.exports = {
   devtool: isProduction ? 'cheap-module-source-map' : 'eval',
-  entry: [
-    '/www/src/client.js'
-  ],
+  entry: {
+    bundle: '/www/src/client.js'
+  },
   output: {
     path: '/www/static',
     filename: 'bundle.js'
