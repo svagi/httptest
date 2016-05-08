@@ -84,6 +84,7 @@ export default function ({ log = {} }) {
 
     // Check if landing html page is HTTP/2
     isLandingHttp2: /HTTP\/2/.test(htmlEntry.response.httpVersion),
+    landingHttpVersion: htmlEntry.response.httpVersion,
 
     // Number of http2 requests
     http2Requests: http2Requests,

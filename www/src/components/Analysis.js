@@ -43,6 +43,10 @@ export default class Analysis extends React.Component {
       </header>
       <div style={style.box}>
         <div style={style.rule}>
+          <span style={style.title}>HTTP version</span>
+          <span style={style.score}>{stats.landingHttpVersion}</span>
+        </div>
+        <div style={style.rule}>
           <span style={style.title}>Requests</span>
           <span style={style.score}>{stats.totalRequests}</span>
         </div>
