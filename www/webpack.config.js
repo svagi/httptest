@@ -66,11 +66,12 @@ module.exports = {
       {
         test: /\.js$/,
         loaders: ['babel'],
-        exclude: /node_modules/
+        include: ['/www/src']
       },
       {
         test: /\.css$/,
-        loader: ExtractTextPlugin.extract('style', 'css', 'postcss')
+        loader: ExtractTextPlugin.extract('style', 'css', 'postcss'),
+        include: ['/www/src']
       }
     ]
   }
