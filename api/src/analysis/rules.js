@@ -1,3 +1,4 @@
+import _ from 'pluralize'
 import { normalizeScore } from './helpers'
 
 export function reduceDNSlookups (domains, opts = {}) {
@@ -16,12 +17,16 @@ export function reduceDNSlookups (domains, opts = {}) {
     description: 'Making requests to a large number of different hosts can hurt performance.'
   }
 }
-export function reduceRedirects (stats, opts = {}) {
+export function reduceRedirects (connections, opts = {}) {
   const { penalty = 10 } = opts
+  const redirects = connections.filter((conn) => conn.isRedirect)
+  const count = redirects.length
   return {
     title: 'Minimize number of HTTP redirects',
-    score: normalizeScore(100 - (penalty * stats.totalRedirects)),
-    description: 'HTTP redirects impose high latency overhead. The optimal number of redirects is zero.'
+    score: normalizeScore(100 - (penalty * count)),
+    description: 'HTTP redirects impose high latency overhead. The optimal number of redirects is zero.',
+    reason: `There ${_('is', count)} ${count} ${_('redirect', count)}`,
+    values: redirects.map((conn) => `${conn.url} -> ${conn.redirectUrl}`)
   }
 }
 export function reuseTCPconnections (stats, connections, opts = {}) {

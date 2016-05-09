@@ -1,5 +1,5 @@
 import * as rules from './rules'
-import { convertHeaders } from './helpers'
+import { convertHeaders, checkRedirect } from './helpers'
 
 export default function ({ log = {} }) {
   const { pages = [], entries = [] } = log
@@ -19,6 +19,7 @@ export default function ({ log = {} }) {
     const res = entry.response
     const status = res.status
     const isHttp2 = /HTTP\/2/.test(res.httpVersion)
+    const isRedirect = checkRedirect(status)
     const reqHeaders = convertHeaders(req.headers)
     const resHeaders = convertHeaders(res.headers)
     // const contentType = resHeaders['content-type']
@@ -27,12 +28,10 @@ export default function ({ log = {} }) {
     if (isHttp2) {
       http2Requests += 1
     }
-
     // Capture all domains
     allDomains.add(reqHeaders['host'])
-
     // Capture all redirects
-    if ([301, 302, 307].indexOf(status) > -1) {
+    if (isRedirect) {
       totalRedirects += 1
       const nextEntry = entries[idx + 1]
       if (nextEntry) {
@@ -44,7 +43,6 @@ export default function ({ log = {} }) {
         }
       }
     }
-
     // Calculate byte size of all requests
     const { headersSize, bodySize } = res
     if (headersSize > 0) {
@@ -62,7 +60,10 @@ export default function ({ log = {} }) {
 
     connections[idx] = {
       isHttp2: isHttp2,
+      isRedirect: isRedirect,
       status: status,
+      url: req.url,
+      redirectUrl: res.redirectURL,
       bodySize: res.bodySize,
       reqHeaders: reqHeaders,
       resHeaders: resHeaders
@@ -121,12 +122,13 @@ export default function ({ log = {} }) {
     rules: {
       useServerPush: rules.useServerPush(stats, connections),
       reduceDNSlookups: rules.reduceDNSlookups(allDomains),
-      reduceRedirects: rules.reduceRedirects(stats),
+      reduceRedirects: rules.reduceRedirects(connections),
       reuseTCPconnections: rules.reuseTCPconnections(stats, connections),
       eliminateNotFoundRequests: rules.eliminateNotFoundRequests(connections),
       useCaching: rules.useCaching(connections),
       useCompression: rules.useCompression(connections)
     }
   }
+  console.log(analysis.rules.reduceRedirects)
   return analysis
 }

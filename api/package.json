@@ -43,6 +43,7 @@
     "express": "^4.13.4",
     "morgan": "^1.7.0",
     "node-uuid": "^1.4.7",
+    "pluralize": "1.2.1",
     "selenium-webdriver": "^2.53.2"
   },
   "devDependencies": {

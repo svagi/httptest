@@ -25,3 +25,8 @@ export function parseMaxAge (headerVal = '') {
 export function parseDate (headerVal) {
   return headerVal ? new Date(headerVal).getTime() : undefined
 }
+
+// Check is status code is redirect
+export function checkRedirect (status) {
+  return [301, 302, 307].indexOf(status) > -1
+}

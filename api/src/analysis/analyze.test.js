@@ -88,6 +88,12 @@ test('[http://seznam.cz] stats.isLandingHttp2 is false', (t) => {
   t.false(analysis['http://seznam.cz'].stats.isLandingHttp2)
 })
 
+test('[http://seznam.cz] reduceRedirects', (t) => {
+  const result = analysis['http://seznam.cz'].rules.reduceRedirects
+  t.is(result.score, 90)
+  t.deepEqual(result.values, [ 'http://seznam.cz/ -> https://www.seznam.cz/' ])
+})
+
 // Only http://svager.cz
 test('[http://svager.cz] stats.totalRequests is 5', (t) => {
   t.is(analysis['http://svager.cz'].stats.totalRequests, 5)
@@ -103,4 +109,10 @@ test('[http://svager.cz] stats.isLandingRedirected is true', (t) => {
 
 test('[http://svager.cz] stats.isLandingHttp2 is false', (t) => {
   t.true(analysis['http://svager.cz'].stats.isLandingHttp2)
+})
+
+test('[http://svager.cz] reduceRedirects', (t) => {
+  const result = analysis['http://svager.cz'].rules.reduceRedirects
+  t.is(result.score, 90)
+  t.deepEqual(result.values, [ 'http://svager.cz/ -> https://www.svager.cz/' ])
 })
