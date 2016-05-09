@@ -9,3 +9,35 @@
   padding-bottom: .1em;
   font-weight: 500;
 }
+#analysis .rule {
+  border-bottom: 1px solid #c9c9c9;
+}
+#analysis .rule:last-child {
+  border-bottom: none;
+}
+#analysis .rule header {
+  display: flex;
+  padding: .5em;
+}
+#analysis .rule header .title {
+  width: 70%;
+}
+#analysis .rule header .score {
+  width: 30%;
+  text-align: right;
+}
+#analysis .rule .info {
+  padding: .5em;
+}
+#analysis .rule .info div {
+  font-size: .85em;
+}
+#analysis .rule .info .reason {
+  padding-top: .25em;
+}
+#analysis .rule .info ul {
+  padding-left: 1.25em;
+}
+#analysis .rule .info .values {
+  font-size: .8em
+}

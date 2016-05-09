@@ -1,4 +1,5 @@
 import React from 'react'
+import Rule from './Rule'
 
 const style = {
   analysis: {
@@ -75,12 +76,7 @@ export default class Analysis extends React.Component {
         Recommendation
       </header>
       <div style={style.box}>
-        {mapRules(rules, ({ title, score }, key) => (
-           <div style={style.rule} key={key}>
-             <span style={style.title}>{title}</span>
-             <span style={style.score}>{score === null ? '-' : `${score}/100`}</span>
-           </div>
-         ))}
+        {mapRules(rules, (props, key) => <Rule {...props} key={key} />)}
       </div>
     </div>
     )
