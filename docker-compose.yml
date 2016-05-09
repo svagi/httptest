@@ -33,6 +33,7 @@ services:
       API_PORT: 8080
     volumes:
       - /www/static
+      - ./www/src:/www/src
       - ./www/package.json:/www/package.json
       - ./www/webpack.config.js:/www/webpack.config.js
     ports:
