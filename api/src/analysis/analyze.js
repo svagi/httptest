@@ -109,7 +109,7 @@ export default function ({ log = {} }) {
     allDomains: allDomains,
 
     // TTFB
-    timeToFirstByte: htmlEntry.time,
+    timeToFirstByte: page.pageTimings.onConnect,
 
     // DNS resolution lookups
     dnsLookups: allDomains.length

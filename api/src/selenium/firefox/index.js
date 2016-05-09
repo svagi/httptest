@@ -13,8 +13,31 @@ function createOptions (prefs) {
   return new firefox.Options().setProfile(profile)
 }
 
+function exportHARtrigger (options, done) {
+  function triggerExport () {
+    return HAR.triggerExport(options).then(function (result) {
+      var har = JSON.parse(result.data)
+      var perf = window.performance.timing.toJSON()
+      var navStart = perf.navigationStart
+      har.log.pages[0].pageTimings = {
+        onContentLoad: perf.domContentLoadedEventStart - navStart,
+        onLoad: perf.loadEventStart - navStart,
+        onConnect: perf.responseEnd - perf.requestStart
+      }
+      done(har)
+    })
+      .catch(done)
+  }
+  if (typeof HAR === 'undefined') {
+    window.addEventListener('har-api-ready', triggerExport, false)
+  } else {
+    triggerExport()
+  }
+}
+
 export function generateHAR ({ url, hostname, dir, id, ext }) {
   return new Promise((resolve, reject) => {
+    const token = 'httptest'
     const options = createOptions({
       'app.update.enabled': false,
       'devtools.toolbar.enabled': true,
@@ -33,7 +56,7 @@ export function generateHAR ({ url, hostname, dir, id, ext }) {
       'devtools.netmonitor.har.pageLoadedTimeout': 1500,
       'devtools.netmonitor.har.defaultFileName': id,
       'devtools.netmonitor.har.defaultLogDir': path.join(dir, hostname),
-      'extensions.netmonitor.har.contentAPIToken': 'httptest',
+      'extensions.netmonitor.har.contentAPIToken': token,
       'extensions.netmonitor.har.enableAutomation': true,
       'extensions.netmonitor.har.autoConnect': true
     })
@@ -45,32 +68,7 @@ export function generateHAR ({ url, hostname, dir, id, ext }) {
       .then(() => driver.manage().window().maximize())
       .then(() => driver.get(url))
       .then(() => new Promise((resolve, reject) => {
-        function asyncScript () {
-          var done = arguments[arguments.length - 1]
-          var opts = {
-            token: 'httptest',
-            getData: true,
-            title: arguments[0]
-          }
-          function triggerExport () {
-            return HAR.triggerExport(opts)
-              .then(function (result) {
-                var har = JSON.parse(result.data)
-                var perf = window.performance.timing.toJSON()
-                var pageTimings = har.log.pages[0].pageTimings
-                pageTimings.onContentLoad = perf.domContentLoadedEventStart - perf.navigationStart
-                pageTimings.onLoad = perf.loadEventStart - perf.navigationStart
-                done(har)
-              })
-              .catch(done)
-          }
-          if (typeof HAR === 'undefined') {
-            window.addEventListener('har-api-ready', triggerExport, false)
-          } else {
-            triggerExport()
-          }
-        }
-        driver.executeAsyncScript(asyncScript, hostname)
+        driver.executeAsyncScript(exportHARtrigger, { token: token, getData: true })
           .then(resolve)
           .catch(() => {
             console.log(`/data/${hostname}/${id}.har`)
