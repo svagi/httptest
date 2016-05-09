@@ -8,12 +8,13 @@ export default class Html extends React.Component {
       <title>
         {this.props.title}
       </title>
+      <meta name='viewport' content='width=device-width, initial-scale=1' />
       <link type='text/css' rel='stylesheet' href='/static/pure.min.css' />
       <link type='text/css' rel='stylesheet' href='/static/app.bundle.css' />
     </head>
     <body>
       <div id='root' dangerouslySetInnerHTML={{ __html: this.props.children }} />
-      <script src='/static/init.bundle.js' onLoad='console.log("hovno")' />
+      <script src='/static/init.bundle.js' />
       <script async src='/static/react.bundle.js' />
       <script async src='/static/app.bundle.js' />
     </body>
