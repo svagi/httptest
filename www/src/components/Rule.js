@@ -18,8 +18,8 @@ export default class Rule extends React.Component {
     const { title, score, description, values = [], reason } = this.props
     const showInfo = this.state.showInfo ? 'block' : 'none'
     return (
-    <div className='rule' onClick={this.handleClick}>
-      <header>
+    <div className='rule'>
+      <header onClick={this.handleClick}>
         <span className='title'>{title}</span>
         <span className='score'>{score === null ? '-' : `${score}/100`}</span>
       </header>

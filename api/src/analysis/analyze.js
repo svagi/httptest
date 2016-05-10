@@ -129,6 +129,6 @@ export default function ({ log = {} }) {
       useCompression: rules.useCompression(connections)
     }
   }
-  console.log(analysis.rules.reduceRedirects)
+  // console.log(analysis.rules.reduceRedirects)
   return analysis
 }

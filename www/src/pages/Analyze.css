@@ -18,6 +18,7 @@
 #analysis .rule header {
   display: flex;
   padding: .5em;
+  cursor: pointer;
 }
 #analysis .rule header .title {
   width: 70%;
