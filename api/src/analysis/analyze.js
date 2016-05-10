@@ -12,9 +12,7 @@ export default function ({ log = {} }) {
   let page = pages[0]
   let htmlRedirect = false
   let htmlEntry = entries[0]
-  let connections = []
-
-  entries.forEach((entry, idx) => {
+  const connections = entries.map((entry, idx) => {
     const req = entry.request
     const res = entry.response
     const status = res.status
@@ -22,8 +20,6 @@ export default function ({ log = {} }) {
     const isRedirect = checkRedirect(status)
     const reqHeaders = convertHeaders(req.headers)
     const resHeaders = convertHeaders(res.headers)
-    // const contentType = resHeaders['content-type']
-
     // Capture all HTTP/2 requests
     if (isHttp2) {
       http2Requests += 1
@@ -57,8 +53,7 @@ export default function ({ log = {} }) {
     if (loadTime < entryTime) {
       loadTime = entryTime
     }
-
-    connections[idx] = {
+    return {
       isHttp2: isHttp2,
       isRedirect: isRedirect,
       status: status,
