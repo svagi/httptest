@@ -29,10 +29,14 @@ export default class Index extends React.Component {
   }
 
   handleSubmit (e) {
+    let url = this.refs.url.value
+    if (!/^https?:\/\//i.test(url)) {
+      url = 'http://' + url
+    }
     e.preventDefault()
     history.push({
       pathname: '/analyze/',
-      search: `?url=${this.refs.url.value}`
+      search: `?url=${url}`
     })
   }
   render () {
@@ -41,7 +45,7 @@ export default class Index extends React.Component {
       <form style={style.form} onSubmit={this.handleSubmit}>
         <input
           ref='url'
-          type='url'
+          type='text'
           style={style.inputUrl}
           name='url'
           placeholder='Enter URL to analyze...'
