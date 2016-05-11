@@ -9,6 +9,9 @@ The certificate is issued for:
 httptest.net
 *.httptest.local
 httptest.local
+*.localhost
+localhost
+127.0.0.1
 192.168.99.100
 ```
 
