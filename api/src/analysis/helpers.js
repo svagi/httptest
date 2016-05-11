@@ -30,3 +30,8 @@ export function parseDate (headerVal) {
 export function checkRedirect (status) {
   return [301, 302, 307].indexOf(status) > -1
 }
+
+// Make values of array unique
+export function uniqArray (arr) {
+  return [...new Set(arr)]
+}

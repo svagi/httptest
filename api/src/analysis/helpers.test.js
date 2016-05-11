@@ -38,3 +38,8 @@ test('Check redirect by status code', (t) => {
   t.false(helpers.checkRedirect(304))
   t.true(helpers.checkRedirect(307))
 })
+
+test('Unique array values', (t) => {
+  t.deepEqual(helpers.uniqArray([1, 2, 2]), [1, 2])
+  t.deepEqual(helpers.uniqArray(['a', 'b', 'a']), ['a', 'b'])
+})
