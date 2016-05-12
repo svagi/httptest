@@ -3,7 +3,6 @@ import firefox from 'selenium-webdriver/firefox'
 import path from 'path'
 import Promise from 'bluebird'
 import webdriver from 'selenium-webdriver'
-import fs from 'fs'
 
 function createOptions (prefs) {
   const profile = new firefox.Profile()
@@ -67,20 +66,7 @@ export function generateHAR ({ url, hostname, dir, id, ext }) {
     driver.manage().timeouts().setScriptTimeout(10000)
       .then(() => driver.manage().window().maximize())
       .then(() => driver.get(url))
-      .then(() => new Promise((resolve, reject) => {
-        driver.executeAsyncScript(exportHARtrigger, { token: token, getData: true })
-          .then(resolve)
-          .catch(() => {
-            console.log(`/data/${hostname}/${id}.har`)
-            fs.readFile(`/data/${hostname}/${id}.har`, 'utf-8', (err, data) => {
-              if (!err) {
-                resolve(JSON.parse(data))
-              } else {
-                reject(err)
-              }
-            })
-          })
-      }))
+      .then(() => driver.executeAsyncScript(exportHARtrigger, { token: token, getData: true }))
       // On success resolve HAR object
       .then(resolve)
       // On failure reject with error
