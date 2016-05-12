@@ -1,40 +1,40 @@
 import _ from 'pluralize'
 import { normalizeScore } from './helpers'
 
-export function reduceDNSlookups (domains, opts = {}) {
-  const { limit = 2, penalty = 5 } = opts
-  const count = domains.length
-
+export function reduceDNSlookups (stats, opts = {}) {
+  const { limit = 4, penalty = 5 } = opts
+  const { uniqDomains, dnsLookups } = stats
   // TODO reduce limit for HTTP2?
   let score = 100
-  if (count > limit) {
-    score -= penalty * (count - limit)
+  if (dnsLookups > limit) {
+    score -= penalty * (dnsLookups - limit)
   }
   return {
     title: 'Reduce DNS lookups',
     score: normalizeScore(score),
-    values: domains,
-    description: 'Making requests to a large number of different hosts can hurt performance.'
+    description: 'Making requests to a large number of different hosts can hurt performance.',
+    values: uniqDomains
   }
 }
 export function reduceRedirects (connections, opts = {}) {
-  const { penalty = 10 } = opts
-  const redirects = connections.filter((conn) => conn.isRedirect)
-  const count = redirects.length
+  const { penalty = 25 } = opts
+  const entries = connections.filter((conn) => conn.isRedirect)
+  const count = entries.length
   return {
     title: 'Minimize number of HTTP redirects',
     score: normalizeScore(100 - (penalty * count)),
     description: 'HTTP redirects impose high latency overhead. The optimal number of redirects is zero.',
-    reason: `There ${_('is', count)} ${count} ${_('redirect', count)}`,
-    values: redirects.map((conn) => `${conn.url} -> ${conn.redirectUrl}`)
+    reason: `There ${_('is', count)} ${_('redirect', count, true)}`,
+    values: entries.map((entry) => `(${entry.status}) ${entry.url} -> ${entry.redirectUrl}`)
   }
 }
 export function reuseTCPconnections (stats, connections, opts = {}) {
   const { penalty = 5 } = opts
-  const count = connections.filter((conn) => {
+  const entries = connections.filter((conn) => {
     const headers = conn.resHeaders
     return !(headers['connection'] !== 'close')
-  }).length
+  })
+  const count = entries.length
   const limit = stats.dnsLookups
   let score = 100
   if (count > limit) {
@@ -43,7 +43,9 @@ export function reuseTCPconnections (stats, connections, opts = {}) {
   return {
     title: 'Reuse TCP connections',
     score: normalizeScore(score),
-    description: 'Persistent connections allow multiple HTTP requests use the same TCP connection, thus eliminates TCP handshakes and slow-start latency overhead.'
+    description: 'Persistent connections allow multiple HTTP requests use the same TCP connection, thus eliminates TCP handshakes and slow-start latency overhead. Use HTTP/2 or try to enable Keep-Alive.',
+    reason: `There ${_('is', count)} ${count} immediately terminated ${_('connection', count)}`,
+    values: entries.map(entry => entry.url)
   }
 }
 export function eliminateRedundancy () {
@@ -54,14 +56,17 @@ export function eliminateRedundancy () {
 }
 export function eliminateNotFoundRequests (connections, opts = {}) {
   const { penalty = 10 } = opts
-  const count = connections.filter((conn) => {
+  const entries = connections.filter((conn) => {
     return conn.status === 404 || conn.status === 410
-  }).length
+  })
+  const count = entries.length
   const score = 100 - (count * penalty)
   return {
     title: 'Eliminate requests to non-existent resources',
     score: normalizeScore(score),
-    description: ''
+    description: 'Avoid fetching content that does not exist.',
+    reason: `There ${_('is', count)} ${_('resource', count, true)} that not exists`,
+    values: entries.map(entry => `(${entry.status}) ${entry.url}`)
   }
 }
 export function useCDN () {
@@ -73,26 +78,30 @@ export function useCDN () {
 }
 export function useCaching (connections, opts = {}) {
   const { limit = 1, penalty = 5 } = opts
-  const missing = connections.filter((conn) => {
+  // TODO content type
+  const entries = connections.filter((conn) => {
     const headers = conn.resHeaders
-    const isMissing = !headers['cache-control'] || !headers['expires']
-    return conn.status === 200 && isMissing
-  }).length
+    return conn.status === 200 &&
+    (!headers['cache-control'] || !headers['expires'])
+  })
+  const count = entries.length
   let score = 100
-  if (missing > limit) {
-    score -= (penalty * (missing - limit))
+  if (count > limit) {
+    score -= (penalty * (count - limit))
   }
   return {
     title: 'Cache resources on the client',
     score: normalizeScore(score),
-    description: ''
+    description: 'Reduce the load times of pages by storing commonly used files from your website on your visitors browser.',
+    reason: `There ${_('is', count)} ${_('resource', count, true)} without expiration time`,
+    values: entries.map(entry => entry.url)
   }
 }
 export function useCompression (connections, opts = {}) {
   const { minSize = 256, penalty = 5 } = opts
   const contentTypeRegex = /text\/(?:plain|html|css|javascript)|application\/(?:javascript|json|ld\+json|xml|atom\+xml)/
   const contentEncodingRegex = /compress|gzip|deflate|bzip2/
-  let count = connections.filter((conn) => {
+  const entries = connections.filter((conn) => {
     const headers = conn.resHeaders
     return (
     (conn.status === 200 || conn.status === 304) &&
@@ -100,12 +109,15 @@ export function useCompression (connections, opts = {}) {
     contentTypeRegex.test(headers['content-type']) &&
     !contentEncodingRegex.test(headers['content-encoding'])
     )
-  }).length
+  })
+  const count = entries.length
   const score = 100 - (penalty * count)
   return {
-    title: 'Compress assets during transfer',
+    title: 'Compress assets',
     score: normalizeScore(score),
-    description: 'Application resources should be transferred with the minimum number of bytes. Always apply the best compression method for each transferred asset.'
+    description: 'Application resources should be transferred with the minimum number of bytes. Always apply the best compression method for each transferred asset.',
+    reason: `There ${_('is', count)} ${_('resource', count, true)} without compression`,
+    values: entries.map(entry => entry.url)
   }
 }
 
@@ -118,10 +130,12 @@ export function useServerPush (stats, connections, opts = {}) {
     !conn.status === 0 &&
     !contentTypeRegex.test(conn.reqHeaders['accept'])
   })
-  const score = 100 - (penalty * entries.length)
+  const count = entries.length
+  const score = 100 - (penalty * count)
   return {
     title: 'Use server push for small assets',
     score: normalizeScore(stats.isLandingHttp2 && score),
-    description: ''
+    description: `There ${_('is', count)} ${_('resource', count, true)} that can be server pushed`,
+    values: entries.map(entry => `${entry.url} (${entry.bodySize})`)
   }
 }

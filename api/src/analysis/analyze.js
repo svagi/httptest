@@ -64,6 +64,7 @@ export default function ({ log = {} }) {
       resHeaders: resHeaders
     }
   })
+  const uniqDomains = uniqArray(allDomains)
   const stats = {
     // Total number of requests
     totalRequests: entries.length,
@@ -99,25 +100,24 @@ export default function ({ log = {} }) {
 
     // Array of all requested domains
     allDomains: allDomains,
+    uniqDomains: uniqDomains,
+    dnsLookups: uniqDomains.length,
 
     // TTFB
-    timeToFirstByte: page.pageTimings.onConnect,
-
-    // DNS resolution lookups
-    dnsLookups: uniqArray(allDomains).length
+    timeToFirstByte: page.pageTimings.onConnect
   }
 
   // Analysis object
   const analysis = {
     stats: stats,
     rules: {
-      useServerPush: rules.useServerPush(stats, connections),
-      reduceDNSlookups: rules.reduceDNSlookups(allDomains),
       reduceRedirects: rules.reduceRedirects(connections),
       reuseTCPconnections: rules.reuseTCPconnections(stats, connections),
-      eliminateNotFoundRequests: rules.eliminateNotFoundRequests(connections),
       useCaching: rules.useCaching(connections),
-      useCompression: rules.useCompression(connections)
+      useCompression: rules.useCompression(connections),
+      reduceDNSlookups: rules.reduceDNSlookups(stats),
+      useServerPush: rules.useServerPush(stats, connections),
+      eliminateNotFoundRequests: rules.eliminateNotFoundRequests(connections)
     }
   }
   // console.log(analysis.rules.reduceRedirects)
