@@ -3,6 +3,10 @@ import { convertHeaders, checkRedirect, uniqArray } from './helpers'
 
 export default function ({ log = {} }) {
   const { pages = [], entries = [] } = log
+  const firstEntry = entries[0]
+  if (!firstEntry) {
+    throw new Error('Invalid HAR')
+  }
   let totalRedirects = 0
   let http2Requests = 0
   let totalBytes = 0
@@ -11,7 +15,11 @@ export default function ({ log = {} }) {
   let allDomains = []
   let page = pages[0]
   let htmlRedirect = false
-  let htmlEntry = entries[0]
+  let htmlEntry = {
+    ...firstEntry,
+    reqHeaders: convertHeaders(firstEntry.request.headers),
+    resHeaders: convertHeaders(firstEntry.response.headers)
+  }
   const connections = entries.map((entry, idx) => {
     const req = entry.request
     const res = entry.response
@@ -31,11 +39,16 @@ export default function ({ log = {} }) {
       totalRedirects += 1
       const nextEntry = entries[idx + 1]
       if (nextEntry) {
+        const nextEntryReqHeaders = convertHeaders(nextEntry.request.headers)
         const nextEntryResHeaders = convertHeaders(nextEntry.response.headers)
         const nextEntryIsHtml = /text\/html/.test(nextEntryResHeaders['content-type'])
         if (nextEntry.response.status === 200 && nextEntryIsHtml) {
           htmlRedirect = true
-          htmlEntry = nextEntry
+          htmlEntry = {
+            ...nextEntry,
+            reqHeaders: nextEntryReqHeaders,
+            resHeaders: nextEntryResHeaders
+          }
         }
       }
     }
@@ -65,19 +78,24 @@ export default function ({ log = {} }) {
     }
   })
   const uniqDomains = uniqArray(allDomains)
-  const stats = {
+  const pageStats = {
     // Total number of requests
     totalRequests: entries.length,
 
     // Total number of redirects
     totalRedirects: totalRedirects,
 
-    // Check if landing html page is redirected
-    isLandingRedirected: htmlRedirect,
+    // Check if html page is redirected
+    isRedirected: htmlRedirect,
 
-    // Check if landing html page is HTTP/2
-    isLandingHttp2: /HTTP\/2/.test(htmlEntry.response.httpVersion),
-    landingHttpVersion: htmlEntry.response.httpVersion,
+    // Check if page is HTTP/2
+    isHttp2: /HTTP\/2/.test(htmlEntry.response.httpVersion),
+
+    // Page protocol
+    protocol: htmlEntry.response.httpVersion,
+
+    // Page host name
+    host: htmlEntry.reqHeaders['host'],
 
     // Number of http2 requests
     http2Requests: http2Requests,
@@ -109,15 +127,17 @@ export default function ({ log = {} }) {
 
   // Analysis object
   const analysis = {
-    stats: stats,
+    page: pageStats,
     rules: {
-      reduceRedirects: rules.reduceRedirects(connections),
-      reuseTCPconnections: rules.reuseTCPconnections(stats, connections),
+      reuseTCPconnections: rules.reuseTCPconnections(pageStats, connections),
       useCaching: rules.useCaching(connections),
       useCompression: rules.useCompression(connections),
-      reduceDNSlookups: rules.reduceDNSlookups(stats),
-      useServerPush: rules.useServerPush(stats, connections),
-      eliminateNotFoundRequests: rules.eliminateNotFoundRequests(connections)
+      reduceRedirects: rules.reduceRedirects(connections),
+      reduceDNSlookups: rules.reduceDNSlookups(pageStats),
+      eliminateNotFoundRequests: rules.eliminateNotFoundRequests(connections),
+      eliminateDomainSharding: rules.eliminateDomainSharding(pageStats),
+      useServerPush: rules.useServerPush(pageStats, connections),
+      avoidConcatenating: rules.avoidConcatenating(pageStats, connections)
     }
   }
   // console.log(analysis.rules.reduceRedirects)

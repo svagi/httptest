@@ -11,6 +11,7 @@
 }
 #analysis .rule {
   border-bottom: 1px solid #c9c9c9;
+  word-wrap: break-word;
 }
 #analysis .rule:last-child {
   border-bottom: none;

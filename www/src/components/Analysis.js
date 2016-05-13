@@ -35,7 +35,7 @@ export default class Analysis extends React.Component {
     super(props)
   }
   render (props = this.props) {
-    const { stats, rules } = props.analysis
+    const { page, rules } = props.analysis
     console.log(props)
     return (
     <div style={style.analysis}>
@@ -44,32 +44,32 @@ export default class Analysis extends React.Component {
       </header>
       <div style={style.box}>
         <div style={style.rule}>
-          <span style={style.title}>HTTP version</span>
-          <span style={style.score}>{stats.landingHttpVersion}</span>
+          <span style={style.title}>Protocol</span>
+          <span style={style.score}>{page.protocol}</span>
         </div>
         <div style={style.rule}>
           <span style={style.title}>Requests</span>
-          <span style={style.score}>{stats.totalRequests}</span>
+          <span style={style.score}>{page.totalRequests}</span>
         </div>
         <div style={style.rule}>
           <span style={style.title}>DNS lookups</span>
-          <span style={style.score}>{stats.dnsLookups}</span>
+          <span style={style.score}>{page.dnsLookups}</span>
         </div>
         <div style={style.rule}>
           <span style={style.title}>Time to first Byte (TTFB)</span>
-          <span style={style.score}>{stats.timeToFirstByte ? <span>{stats.timeToFirstByte / 1000} s</span> : '-'}</span>
+          <span style={style.score}>{page.timeToFirstByte ? <span>{page.timeToFirstByte / 1000} s</span> : '-'}</span>
         </div>
         <div style={style.rule}>
           <span style={style.title}>DOM load time</span>
-          <span style={style.score}>{stats.domLoadTime ? <span>{stats.domLoadTime / 1000} s</span> : '-'}</span>
+          <span style={style.score}>{page.domLoadTime ? <span>{page.domLoadTime / 1000} s</span> : '-'}</span>
         </div>
         <div style={style.rule}>
           <span style={style.title}>Load time</span>
-          <span style={style.score}>{stats.loadTime ? <span>{stats.loadTime / 1000} s</span> : '-'}</span>
+          <span style={style.score}>{page.loadTime ? <span>{page.loadTime / 1000} s</span> : '-'}</span>
         </div>
         <div style={style.rule}>
           <span style={style.title}>Total page size</span>
-          <span style={style.score}>{stats.totalBytes / 1000} kB</span>
+          <span style={style.score}>{page.totalBytes / 1000} kB</span>
         </div>
       </div>
       <header style={style.header}>

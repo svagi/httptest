@@ -6,6 +6,13 @@ export function convertHeaders (arrayHeaders) {
   }, {})
 }
 
+// Normalize rule
+export function normalizeRule (rule) {
+  rule.score = normalizeScore(rule.score)
+  rule.reason = normalizeReason(rule.reason, rule.count)
+  return rule
+}
+
 // Normalize score value
 export function normalizeScore (score, opts = {}) {
   const { min = 0, max = 100 } = opts
@@ -13,6 +20,11 @@ export function normalizeScore (score, opts = {}) {
   if (score < min) score = min
   if (score > max) score = max
   return score
+}
+
+// Normalize reason value
+export function normalizeReason (reason, count = 0) {
+  return count > 0 ? reason : null
 }
 
 // Parse max-age from Cache-Control header

@@ -11,108 +11,108 @@ test('[all] analysis is object', (t) => {
   })
 })
 
-test('[all] stats as property of analysis is object', (t) => {
+test('[all] page as property of analysis is object', (t) => {
   domains.forEach((domain) => {
-    t.is(typeof analysis['http://seznam.cz'].stats, 'object')
+    t.is(typeof analysis['http://seznam.cz'].page, 'object')
   })
 })
 
-test('[all] stats.totalRequests is number greater or equeal to zero', (t) => {
+test('[all] page.totalRequests is number greater or equeal to zero', (t) => {
   domains.forEach((domain) => {
-    t.true(analysis['http://seznam.cz'].stats.totalRequests >= 0)
+    t.true(analysis['http://seznam.cz'].page.totalRequests >= 0)
   })
 })
 
-test('[all] stats.totalRedirects is number greater or equeal to zero', (t) => {
+test('[all] page.totalRedirects is number greater or equeal to zero', (t) => {
   domains.forEach((domain) => {
-    t.true(analysis['http://seznam.cz'].stats.totalRedirects >= 0)
+    t.true(analysis['http://seznam.cz'].page.totalRedirects >= 0)
   })
 })
 
-test('[all] stats.isLandingRedirected property is boolean', (t) => {
+test('[all] page.isLandingRedirected property is boolean', (t) => {
   domains.forEach((domain) => {
-    t.is(typeof analysis['http://seznam.cz'].stats.isLandingRedirected, 'boolean')
+    t.is(typeof analysis['http://seznam.cz'].page.isRedirected, 'boolean')
   })
 })
 
-test('[all] stats.isLandingHttp2 property is boolean', (t) => {
+test('[all] page.isLandingHttp2 property is boolean', (t) => {
   domains.forEach((domain) => {
-    t.is(typeof analysis['http://seznam.cz'].stats.isLandingHttp2, 'boolean')
+    t.is(typeof analysis['http://seznam.cz'].page.isHttp2, 'boolean')
   })
 })
 
-test('[all] stats.http2Requests is number greater or equeal to zero', (t) => {
+test('[all] page.http2Requests is number greater or equeal to zero', (t) => {
   domains.forEach((domain) => {
-    t.true(analysis['http://seznam.cz'].stats.http2Requests >= 0)
+    t.true(analysis['http://seznam.cz'].page.http2Requests >= 0)
   })
 })
 
-test('[all] stats.totalBytes is number greater or equeal to zero', (t) => {
+test('[all] page.totalBytes is number greater or equeal to zero', (t) => {
   domains.forEach((domain) => {
-    t.true(analysis['http://seznam.cz'].stats.totalBytes >= 0)
+    t.true(analysis['http://seznam.cz'].page.totalBytes >= 0)
   })
 })
 
-test('[all] stats.domLoadTime is number greater or equeal to zero', (t) => {
+test('[all] page.domLoadTime is number greater or equeal to zero', (t) => {
   domains.forEach((domain) => {
-    t.true(analysis['http://seznam.cz'].stats.domLoadTime >= 0)
+    t.true(analysis['http://seznam.cz'].page.domLoadTime >= 0)
   })
 })
 
-test('[all] stats.loadTime is number greater or equeal to zero', (t) => {
+test('[all] page.loadTime is number greater or equeal to zero', (t) => {
   domains.forEach((domain) => {
-    t.true(analysis['http://seznam.cz'].stats.loadTime >= 0)
+    t.true(analysis['http://seznam.cz'].page.loadTime >= 0)
   })
 })
 
-test('[all] stats.domains is array', (t) => {
+test('[all] page.domains is array', (t) => {
   domains.forEach((domain) => {
-    t.true(Array.isArray(analysis['http://seznam.cz'].stats.allDomains))
+    t.true(Array.isArray(analysis['http://seznam.cz'].page.allDomains))
   })
 })
 
 // Only http://seznam.cz
-test('[http://seznam.cz] stats.totalRequests is 69', (t) => {
-  t.is(analysis['http://seznam.cz'].stats.totalRequests, 69)
+test('[http://seznam.cz] page.totalRequests is 69', (t) => {
+  t.is(analysis['http://seznam.cz'].page.totalRequests, 69)
 })
 
-test('[http://seznam.cz] stats.totalRedirects is 1', (t) => {
-  t.is(analysis['http://seznam.cz'].stats.totalRedirects, 1)
+test('[http://seznam.cz] page.totalRedirects is 1', (t) => {
+  t.is(analysis['http://seznam.cz'].page.totalRedirects, 1)
 })
 
-test('[http://seznam.cz] stats.isLandingRedirected is true', (t) => {
-  t.true(analysis['http://seznam.cz'].stats.isLandingRedirected)
+test('[http://seznam.cz] page.isLandingRedirected is true', (t) => {
+  t.true(analysis['http://seznam.cz'].page.isRedirected)
 })
 
-test('[http://seznam.cz] stats.isLandingHttp2 is false', (t) => {
-  t.false(analysis['http://seznam.cz'].stats.isLandingHttp2)
+test('[http://seznam.cz] page.isLandingHttp2 is false', (t) => {
+  t.false(analysis['http://seznam.cz'].page.isHttp2)
 })
 
 test('[http://seznam.cz] reduceRedirects', (t) => {
   const result = analysis['http://seznam.cz'].rules.reduceRedirects
-  t.is(result.score, 90)
-  t.deepEqual(result.values, [ 'http://seznam.cz/ -> https://www.seznam.cz/' ])
+  t.is(result.score, 75)
+  t.deepEqual(result.values, [ '(302) http://seznam.cz/ -> https://www.seznam.cz/' ])
 })
 
 // Only http://svager.cz
-test('[http://svager.cz] stats.totalRequests is 5', (t) => {
-  t.is(analysis['http://svager.cz'].stats.totalRequests, 5)
+test('[http://svager.cz] page.totalRequests is 5', (t) => {
+  t.is(analysis['http://svager.cz'].page.totalRequests, 5)
 })
 
-test('[http://svager.cz] stats.totalRedirects is 1', (t) => {
-  t.is(analysis['http://svager.cz'].stats.totalRedirects, 1)
+test('[http://svager.cz] page.totalRedirects is 1', (t) => {
+  t.is(analysis['http://svager.cz'].page.totalRedirects, 1)
 })
 
-test('[http://svager.cz] stats.isLandingRedirected is true', (t) => {
-  t.true(analysis['http://svager.cz'].stats.isLandingRedirected)
+test('[http://svager.cz] page.isLandingRedirected is true', (t) => {
+  t.true(analysis['http://svager.cz'].page.isRedirected)
 })
 
-test('[http://svager.cz] stats.isLandingHttp2 is false', (t) => {
-  t.true(analysis['http://svager.cz'].stats.isLandingHttp2)
+test('[http://svager.cz] page.isLandingHttp2 is false', (t) => {
+  t.true(analysis['http://svager.cz'].page.isHttp2)
 })
 
 test('[http://svager.cz] reduceRedirects', (t) => {
   const result = analysis['http://svager.cz'].rules.reduceRedirects
-  t.is(result.score, 90)
-  t.deepEqual(result.values, [ 'http://svager.cz/ -> https://www.svager.cz/' ])
+  t.is(result.score, 75)
+  t.deepEqual(result.values, [ '(301) http://svager.cz/ -> https://www.svager.cz/' ])
 })
