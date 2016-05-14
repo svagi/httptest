@@ -21,11 +21,13 @@ function exportHARtrigger (options, done) {
       har.log.pages[0].pageTimings = {
         onContentLoad: perf.domContentLoadedEventStart - navStart,
         onLoad: perf.loadEventStart - navStart,
-        onConnect: perf.responseEnd - perf.requestStart
+        onConnect: perf.connectEnd - navStart,
+        onFirstByte: perf.responseStart - navStart,
+        onDomainLookupEnd: perf.domainLookupEnd - navStart,
+        onRedirectEnd: perf.redirectEnd - navStart
       }
       done(har)
-    })
-      .catch(done)
+    }).catch(done)
   }
   if (typeof HAR === 'undefined') {
     window.addEventListener('har-api-ready', triggerExport, false)

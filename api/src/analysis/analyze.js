@@ -122,7 +122,7 @@ export default function ({ log = {} }) {
     dnsLookups: uniqDomains.length,
 
     // TTFB
-    timeToFirstByte: page.pageTimings.onConnect
+    timeToFirstByte: page.pageTimings.onFirstByte
   }
 
   // Analysis object

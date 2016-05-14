@@ -40,7 +40,7 @@ export default class Analysis extends React.Component {
     return (
     <div style={style.analysis}>
       <header style={style.header}>
-        Webpage statistics
+        Page statistics
       </header>
       <div style={style.box}>
         <div style={style.rule}>
