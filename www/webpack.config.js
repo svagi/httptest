@@ -14,13 +14,10 @@ var commonPlugins = [
     }
   }),
   new ExtractTextPlugin('app.bundle.css', { allChunks: true }),
+  new webpack.optimize.CommonsChunkPlugin({ name: 'react' }),
   new webpack.optimize.CommonsChunkPlugin({
-    name: 'react',
-    filename: 'react.bundle.js'
-  }),
-  new webpack.optimize.CommonsChunkPlugin({
+    name: 'init',
     names: [''],
-    filename: 'init.bundle.js',
     minChunks: Infinity
   })
 ]
@@ -31,7 +28,8 @@ var productionPlugins = [
     comments: false,
     compress: {
       warnings: false
-    }
+    },
+    sourceMap: false
   }),
   new CompressionPlugin({
     asset: '[path].gz[query]',
