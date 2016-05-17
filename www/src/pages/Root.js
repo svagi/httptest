@@ -34,7 +34,7 @@ export default class Root extends React.Component {
 
   render () {
     return (
-    <div>
+    <div id='root'>
       <header style={style.header}>
         <div style={style.wrapper}>
           <Link to='/' style={style.link}>

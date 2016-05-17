@@ -1,6 +1,6 @@
 function init () {
   require('./pages/router').renderClientRoute({
-    element: document.getElementById('root')
+    element: document.getElementById('app')
   })
 }
 

@@ -13,7 +13,7 @@ export default class Html extends React.Component {
       <link type='text/css' rel='stylesheet' href='/static/app.bundle.css' />
     </head>
     <body>
-      <div id='root' dangerouslySetInnerHTML={{ __html: this.props.children }} />
+      <div id='app' dangerouslySetInnerHTML={{ __html: this.props.children }} />
       <script src='/static/init.bundle.js' />
       <script async src='/static/react.bundle.js' />
       <script async src='/static/app.bundle.js' />
