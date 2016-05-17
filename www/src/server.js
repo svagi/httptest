@@ -142,6 +142,7 @@ app.get('*', (req, res) => {
           '</static/app.bundle.css>; rel=preload; as=style;',
           '</static/init.bundle.js>; rel=preload; as=script;'
         ])
+        if (!isProduction) res.cookie('nocache', true)
         res.status(200).send(html)
       }
     })
