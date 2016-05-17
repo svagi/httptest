@@ -65,7 +65,7 @@ export default class Analyze extends React.Component {
     const { url } = props.location.query
     const { status, data } = this.state
     return (
-    <div id='analysis'>
+    <div id='analyze'>
       <h2>Performance analysis of</h2>
       <h3><a href={url} target='_blank'>{url}</a></h3>
       <h4>Status:&nbsp;{status.msg}</h4>

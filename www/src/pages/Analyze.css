@@ -1,45 +1,51 @@
-#analysis h2 {
+#analyze h2 {
   padding-bottom: .1em;
 }
-#analysis h3 {
+#analyze h3 {
   padding-bottom: .4em;
   font-weight: 500;
 }
-#analysis h4 {
+#analyze h4 {
   padding-bottom: .1em;
   font-weight: 500;
 }
-#analysis .rule {
+#analysis {
+  padding: 1em 0;
+}
+#analysis section {
+  margin: .5em 0;
+  border: solid 5px #c9c9c9
+}
+#analysis section .rule {
   border-bottom: 1px solid #c9c9c9;
   word-wrap: break-word;
+  padding: .5em;
 }
-#analysis .rule:last-child {
+#analysis section .rule:last-child {
   border-bottom: none;
 }
-#analysis .rule header {
-  display: flex;
-  padding: .5em;
-  cursor: pointer;
+#analysis section .rule .info {
+  padding: .5em 0;
 }
-#analysis .rule header .title {
-  width: 70%;
-}
-#analysis .rule header .score {
-  width: 30%;
-  text-align: right;
-}
-#analysis .rule .info {
-  padding: .5em;
-}
-#analysis .rule .info div {
+#analysis section .rule .info div {
   font-size: .85em;
 }
-#analysis .rule .info .reason {
+#analysis section .rule .info .reason {
   padding-top: 1em;
 }
-#analysis .rule .info ul {
+#analysis section .rule .info ul {
   padding-left: 1.25em;
 }
-#analysis .rule .info .values {
+#analysis section .rule .info .values {
   font-size: .8em
+}
+#analysis section .rule header {
+  display: flex;
+  cursor: pointer;
+}
+#analysis section .rule header .left {
+  width: 70%;
+}
+#analysis section .rule header .right {
+  width: 30%;
 }

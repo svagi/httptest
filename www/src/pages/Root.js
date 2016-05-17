@@ -1,27 +1,7 @@
 import React, { PropTypes } from 'react'
 import Link from 'react-router/lib/Link'
 
-const style = {
-  wrapper: {
-    width: '80%',
-    margin: '0 auto'
-  },
-  header: {
-    backgroundColor: '#1f8dd6',
-    color: '#fff'
-  },
-  h1: {
-    display: 'inline-block',
-    padding: '.5em 0',
-    margin: 0
-  },
-  link: {
-    color: '#fff'
-  },
-  section: {
-    paddingTop: '1em'
-  }
-}
+const year = new Date().getFullYear()
 
 export default class Root extends React.Component {
   constructor (props) {
@@ -35,18 +15,28 @@ export default class Root extends React.Component {
   render () {
     return (
     <div id='root'>
-      <header style={style.header}>
-        <div style={style.wrapper}>
-          <Link to='/' style={style.link}>
-          <h1 style={style.h1}>httptest</h1>
+      <header>
+        <div>
+          <Link to='/'>
+          <h1>httptest</h1>
           </Link>
         </div>
       </header>
-      <section style={style.section}>
-        <div style={style.wrapper}>
+      <main>
+        <div>
           {this.props.children}
         </div>
-      </section>
+      </main>
+      <footer>
+        <div>
+          <div className='left'>
+            <a href='https://github.com/svagi/httptest' target='_blank'>Source code</a>
+          </div>
+          <div className='right'>
+            <a href='https://www.svager.cz' target='_blank'>Made with &#9829; {year}</a>
+          </div>
+        </div>
+      </footer>
     </div>
     )
   }

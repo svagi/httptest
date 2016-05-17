@@ -1,23 +1,6 @@
 import React from 'react'
 import { history } from './router'
 
-const style = {
-  form: {
-    display: 'flex',
-    alignContent: 'stretch',
-    width: '100%'
-  },
-  inputUrl: {
-    borderWidth: 5,
-    width: '100%',
-    marginRight: 5
-  },
-  inputSubmit: {
-    borderWidth: 5,
-    width: '6em'
-  }
-}
-
 export default class Index extends React.Component {
   constructor (props) {
     super(props)
@@ -41,16 +24,16 @@ export default class Index extends React.Component {
   }
   render () {
     return (
-    <div>
-      <form style={style.form} onSubmit={this.handleSubmit}>
+    <div id='index'>
+      <h2>Analyze your site's performance now</h2>
+      <form onSubmit={this.handleSubmit}>
         <input
           ref='url'
           type='text'
-          style={style.inputUrl}
           name='url'
           placeholder='Enter URL to analyze...'
           required/>
-        <input type='submit' style={style.inputSubmit} value='Analyze' />
+        <input type='submit' value='Analyze' />
       </form>
     </div>
     )

@@ -1,17 +1,29 @@
-input {
-  padding: 10px;
-  border: solid 5px #c9c9c9;
-  transition: border 0.3s;
+#index form {
+    display: flex;
+    align-content: stretch;
+    width: 100%;
 }
-input:focus {
-  border: solid 5px #969696;
-  outline: none;
+#index input {
+    padding: 10px;
+    border: solid 5px #c9c9c9;
+    transition: border 0.3s;
 }
-input[type='submit'] {
-  color: #4ea2da;
-  border: solid 5px #4ea2da;
-  background-color: #ffffff;
+#index input:focus {
+    border: solid 5px #969696;
+    outline: none;
 }
-input[type='submit']:hover {
-  border: solid 5px #1f8dd6;
+#index input[type='submit'] {
+    color: #4ea2da;
+    border: solid 5px #4ea2da;
+    background-color: #ffffff;
+    border-width: 5px;
+    width: 6em;
+}
+#index input[type='submit']:hover {
+    border: solid 5px #1f8dd6;
+}
+#index input[type='text'] {
+    border-width: 5;
+    width: 100%;
+    margin-right: 5px;
 }
