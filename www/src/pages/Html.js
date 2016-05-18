@@ -11,6 +11,8 @@ export default class Html extends React.Component {
       <meta name='viewport' content='width=device-width, initial-scale=1' />
       <link type='text/css' rel='stylesheet' href='/static/pure.min.css' />
       <link type='text/css' rel='stylesheet' href='/static/app.bundle.css' />
+      <link rel='dns-prefetch' href='https://github.com/' />
+      <link rel='dns-prefetch' href='https://www.svager.cz/' />
     </head>
     <body>
       <div id='app' dangerouslySetInnerHTML={{ __html: this.props.children }} />
