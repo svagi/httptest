@@ -1,7 +1,4 @@
 # Development configuration
-# With VNC for visual debugging
-#  vnc://<docker-machine-ip>:<port>
-#  password=secret
 
 version: "2"
 
@@ -62,7 +59,7 @@ services:
 
   # Selenium node - firefox
   firefox:
-    image: selenium/node-firefox-debug:2.53.0
+    build: ./firefox
     container_name: firefox
     environment:
       HUB_PORT_4444_TCP_ADDR: hub

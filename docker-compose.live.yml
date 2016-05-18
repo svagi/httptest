@@ -50,7 +50,7 @@ services:
 
   # Selenium node - firefox
   firefox:
-    image: selenium/node-firefox:2.53.0
+    build: ./firefox
     restart: always
     environment:
       HUB_PORT_4444_TCP_ADDR: hub
