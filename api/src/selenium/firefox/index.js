@@ -6,7 +6,7 @@ import webdriver from 'selenium-webdriver'
 
 function createOptions (prefs) {
   const profile = new firefox.Profile()
-  profile.addExtension('/api/src/selenium/firefox/harexporttrigger-0.5.0-beta.8.xpi')
+  profile.addExtension('/api/src/selenium/firefox/harexporttrigger-0.5.0-beta.9.xpi')
   Object.keys(prefs)
     .forEach((pref) => profile.setPreference(pref, prefs[pref]))
   return new firefox.Options().setProfile(profile)
