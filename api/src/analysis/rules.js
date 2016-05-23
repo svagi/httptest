@@ -129,10 +129,11 @@ export function useCDN () {
 }
 
 export function eliminateDomainSharding (page) {
+  // TODO
   return normalizeRule({
     title: 'HTTP/2: Elimiminate domain sharding',
     score: page.isHttp2 ? 100 : null,
-    description: '',
+    description: 'Under HTTP/1 parallelism is limited by number of TCP connections (in practice ~6 connections per origin). However, each of these connections incur unnecessary overhead and compete with each other for bandwidth. Domain sharding should be avoided in HTTP/2.',
     reason: ''
   })
 }
