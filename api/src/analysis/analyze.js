@@ -1,5 +1,5 @@
 import * as rules from './rules'
-import { convertHeaders, checkRedirect, uniqArray } from './helpers'
+import { convertHeaders, checkRedirect } from './helpers'
 
 export default function ({ log = {} }) {
   const { pages = [], entries = [] } = log
@@ -12,7 +12,7 @@ export default function ({ log = {} }) {
   let totalBytes = 0
   let domLoadTime = 0
   let loadTime = 0
-  let allDomains = []
+  let dns = {}
   let page = pages[0]
   let htmlRedirect = false
   let htmlEntry = {
@@ -33,7 +33,7 @@ export default function ({ log = {} }) {
       http2Requests += 1
     }
     // Capture all domains
-    allDomains.push(reqHeaders['host'])
+    dns[reqHeaders['host']] = entry.serverIPAddress
     // Capture all redirects
     if (isRedirect) {
       totalRedirects += 1
@@ -77,7 +77,6 @@ export default function ({ log = {} }) {
       resHeaders: resHeaders
     }
   })
-  const uniqDomains = uniqArray(allDomains)
   const pageStats = {
     // Total number of requests
     totalRequests: entries.length,
@@ -117,9 +116,8 @@ export default function ({ log = {} }) {
       : loadTime - new Date(page.startedDateTime).getTime(),
 
     // Array of all requested domains
-    allDomains: allDomains,
-    uniqDomains: uniqDomains,
-    dnsLookups: uniqDomains.length,
+    dns: dns,
+    dnsLookups: Object.keys(dns).length,
 
     // TTFB
     timeToFirstByte: page.pageTimings.onFirstByte

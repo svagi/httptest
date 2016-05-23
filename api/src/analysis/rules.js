@@ -84,7 +84,7 @@ export function reduceRedirects (connections, opts = {}) {
 
 export function reduceDNSlookups (page, opts = {}) {
   const { limit = 4, penalty = 5 } = opts
-  const { uniqDomains, dnsLookups } = page
+  const { dns, dnsLookups } = page
   // TODO reduce limit for HTTP2?
   let score = 100
   if (dnsLookups > limit) {
@@ -94,7 +94,7 @@ export function reduceDNSlookups (page, opts = {}) {
     title: 'Reduce DNS lookups',
     score: score,
     description: 'Making requests to a large number of different hosts can hurt performance.',
-    values: uniqDomains,
+    values: Object.keys(dns),
     count: dnsLookups
   })
 }
