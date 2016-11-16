@@ -42,11 +42,11 @@ var productionPlugins = [
 module.exports = {
   devtool: isProduction ? 'cheap-module-source-map' : 'eval',
   entry: {
-    app: '/www/src/client.js',
+    app: '/api/src/client.js',
     react: ['react', 'react-dom', 'react-router']
   },
   output: {
-    path: '/www/static',
+    path: '/api/static',
     filename: '[name].bundle.js'
   },
   watchOptions: {
@@ -64,12 +64,12 @@ module.exports = {
       {
         test: /\.js$/,
         loaders: ['babel'],
-        include: ['/www/src']
+        include: ['/api/src']
       },
       {
         test: /\.css$/,
         loader: ExtractTextPlugin.extract('style', 'css', 'postcss'),
-        include: ['/www/src']
+        include: ['/api/src']
       }
     ]
   }

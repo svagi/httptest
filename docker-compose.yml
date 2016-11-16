@@ -1,72 +1,47 @@
 # Development configuration
-
 version: "2"
-
+volumes:
+  cache_data: {}
 services:
-  # API server
   api:
     build: ./api
-    container_name: api
+    container_name: httptest_api
+    tty: true
     environment:
-      NODE_ENV: 'development'
-      PORT: 8080
-      SELENIUM_REMOTE_URL: http://hub:4444/wd/hub
+      - NODE_ENV=development
+      - NODE_PORT=8000
+      - DEBUG=app:*
+    depends_on:
+     - cache
     volumes:
+      - /api/static
       - ./api/src:/api/src
       - ./api/package.json:/api/package.json
-      - ./api/data:/data
-    ports:
-      - "8080:8080"
-    command: npm run watch
-
-  # WWW server
-  www:
-    build: ./www
-    container_name: www
-    environment:
-      NODE_ENV: 'development'
-      PORT: 9090
-      API_HOST: 'api'
-      API_PORT: 8080
-    volumes:
-      - /www/static
-      - ./www/src:/www/src
-      - ./www/package.json:/www/package.json
-      - ./www/webpack.config.js:/www/webpack.config.js
-    ports:
-      - "9090:9090"
-    command: npm run watch
-
-  # Reverse proxy server Nginx
+      - ./api/webpack.config.js:/api/webpack.config.js
+    expose:
+      - "8000"
+    command: development
   proxy:
     build: ./proxy
-    container_name: proxy
+    container_name: httptest_proxy
     depends_on:
       - api
-      - www
     volumes_from:
-      - www
+      - api
     ports:
       - "80:80"
       - "443:443"
-
-  # Selenium hub
-  hub:
-    image: selenium/hub:2.53.0
-    container_name: hub
-    expose:
-      - "4444"
-
-  # Selenium node - firefox
-  firefox:
-    build: ./firefox
-    container_name: firefox
-    environment:
-      HUB_PORT_4444_TCP_ADDR: hub
-      HUB_PORT_4444_TCP_PORT: 4444
-    depends_on:
-      - hub
-    volumes_from:
-      - api
+  cache:
+    build: ./cache
+    container_name: httptest_cache
+    volumes:
+      - cache_data:/data
     ports:
-      - "5901:5900"
+      - "6379:6379" # DEV only!
+  chrome:
+    image: yukinying/chrome-headless:56.0.2920.2
+    container_name: httptest_chrome
+    command: --enable-benchmarking --enable-net-benchmarking
+    shm_size: 256m
+    ports:
+      - "9222:9222"

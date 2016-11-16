@@ -1,17 +1,74 @@
-import { generateHAR } from './selenium/firefox'
-import { getProtocols } from './socket'
-import bodyParser from 'body-parser'
+import { isWebUri } from 'valid-url'
 import express from 'express'
-import expressValidator from 'express-validator'
-import morgan from 'morgan'
-import url from 'url'
-import uuid from 'node-uuid'
 import http from 'http'
-import analyze from './analysis/analyze'
+import morgan from 'morgan'
+import Redis from 'ioredis'
 
-export const app = express()
-const isProduction = app.get('env') !== 'development'
-const PORT = parseInt(process.env.PORT, 10)
+import { renderServerRoute } from './pages/router'
+import log from './debug'
+import createWorker from './worker'
+
+const app = express()
+const ENV = process.env.NODE_ENV
+const PORT = process.env.NODE_PORT
+const IS_DEV = ENV !== 'development'
+const cache = new Redis({
+  host: 'cache',
+  showFriendlyErrorStack: IS_DEV
+})
+
+function validUrlMiddleware (req, res, next) {
+  req.query.url = isWebUri(req.query.url)
+  if (!req.query.url) {
+    return res.status(400).end()
+  }
+  next()
+}
+
+function sseMiddleware (req, res, next) {
+  if (req.headers.accept !== 'text/event-stream') {
+    return res.status(406).end()
+  }
+  const TIMEOUT = 5 * 1000
+  let lastId
+  let timer
+  req.on('close', function () {
+    log.debug('SSE: Client close connection')
+    timer = clearTimeout(timer)
+  })
+  res.on('finish', function () {
+    log.debug('SSE: Server finish connection')
+    timer = clearTimeout(timer)
+  })
+  // res.socket.setTimeout(Number.MAX_VALUE) // last as long as possible
+  const sse = res.sse = {
+    open () {
+      lastId = 0
+      timer = setTimeout(sse.ping, TIMEOUT)
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-store',
+        'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no' // turn off proxy buffering
+      })
+      sse.emit('open')
+      return sse
+    },
+    emit (event = 'message', data = 'null') {
+      log.debug(`SSE: emit -> ${lastId}:${event}`)
+      res.write('id: ' + lastId++ + '\n')
+      res.write('event: ' + event + '\n')
+      res.write('data: ' + data + '\n\n')
+      return sse
+    },
+    ping () {
+      sse.emit('ping')
+      timer = setTimeout(sse.ping, TIMEOUT)
+      return sse
+    }
+  }
+  next()
+}
 
 // Turn off extra header
 app.disable('x-powered-by')
@@ -20,109 +77,144 @@ app.disable('x-powered-by')
 app.set('etag', 'strong')
 
 // Setup custom morgan format
-app.use(morgan(isProduction ? '[:date[iso]] :method :url :status HTTP/:http-version :response-time ms - ":user-agent"' : ' :method :url :status HTTP/:http-version :response-time ms - ":user-agent"'))
+app.use(morgan(IS_DEV
+  ? ':method :url :status HTTP/:http-version :response-time ms - ":user-agent"'
+  : '[:date[iso]] :method :url :status HTTP/:http-version :response-time ms - ":user-agent"'
+))
 
-app.use(bodyParser.json())
-app.use(expressValidator({
-  customValidators: {
-    isArray: (value) => Array.isArray(value)
-  },
-  customSanitizers: {
-    toURL: (value) => url.parse(value)
+// Retrieve analysis
+app.get('/analysis', (req, res) => {
+  return cache.get('analysis:' + req.query.url)
+    .then(analysis => {
+      // analysis exists in cache
+      if (analysis) {
+        return res.status(200).end(analysis)
+      } else {
+        return res.status(404).end()
+      }
+    })
+    .catch(err => {
+      log.error(err)
+      return res.status(500).end()
+    })
+})
+
+// Delete analysis
+app.delete('/analysis', validUrlMiddleware, (req, res) => {
+  return cache.del('analysis:' + req.query.url)
+    .then(() => {
+      return res.status(200).end()
+    })
+    .catch(err => {
+      log.error(err)
+      return res.status(500).end()
+    })
+})
+
+// API subscriber
+app.get('/events', validUrlMiddleware, sseMiddleware, (req, res) => {
+  const { url, purge } = req.query
+  const useCache = typeof purge === 'undefined'
+  // Open SSE connection
+  const sse = res.sse.open()
+  // Define URL specific events
+  const events = {
+    ANALYSIS_DONE: `analysis-done:${url}`,
+    ANALYSIS_START: `analysis-start:${url}`,
+    HAR_DONE: `har-done:${url}`,
+    HAR_START: `har-start:${url}`,
+    QUEUE_POP: 'queue-pop',
+    QUEUE_PUSH: 'queue-push'
   }
-}))
-
-function webhook (options, payload) {
-  const data = JSON.stringify(payload)
-  return new Promise((resolve, reject) => {
-    const callback = http.request(options)
-    callback.on('error', reject)
-    callback.end(data, resolve)
+  // Register new redis connection
+  const subscriber = cache.duplicate()
+  // Quit subscriber if client or server close connection
+  req.on('close', () => {
+    subscriber.quit()
   })
-}
-
-// Routes
-app.post('/analyze', (req, res) => {
-  // Validation
-  req.checkBody('url').notEmpty()
-  req.checkBody('hook').notEmpty()
-  req.sanitize('url').toURL()
-  req.sanitize('hook').toURL()
-  const errors = req.validationErrors()
-  if (errors) {
-    return res.status(400).send({ errors: errors })
-  }
-  // Send response with HAR ID immediately
-  const id = uuid.v4()
-  res.json({ id: id })
-  // Setup
-  const { url, hook } = req.body
-  const harOpts = {
-    url: url.href,
-    hostname: url.hostname,
-    id: id,
-    dir: process.env.API_DATA_DIR,
-    ext: '.har'
-  }
-  const hookOpts = {
-    method: 'POST',
-    host: hook.hostname,
-    port: hook.port,
-    path: hook.pathname,
-    headers: {
-      'Last-Event-ID': id,
-      'Content-Type': 'application/json'
+  res.on('finish', () => {
+    subscriber.quit()
+  })
+  // Listen on events
+  subscriber.on('message', (channel, message) => {
+    switch (channel) {
+      case events.HAR_START:
+        sse.emit('har-start')
+        return
+      case events.HAR_DONE:
+        sse.emit('har-done')
+        return
+      case events.ANALYSIS_START:
+        sse.emit('analysis-start')
+        return
+      case events.ANALYSIS_DONE:
+        sse.emit('analysis-done', message)
+        res.end()
+        return
+      case events.QUEUE_PUSH:
+        sse.emit('queue-push', message)
+        return
+      case events.QUEUE_POP:
+        sse.emit('queue-pop')
+        return
     }
-  }
-  // Start generating HAR file
-  generateHAR(harOpts)
-    .then((har) => {
-      hookOpts.headers['Last-Event'] = 'analysis:done'
-      webhook(hookOpts, {
-        host: url.hostname,
-        analysis: analyze(har),
-        har: har,
-        error: null
+  })
+  // Subscribe to all events
+  subscriber.subscribe(Object.values(events), (err) => {
+    if (err) {
+      log.error(err)
+      sse.emit('error')
+      return res.end()
+    }
+    sse.emit('subscribe')
+    cache.get(`analysis:${url}`)
+      .then((analysis) => {
+        if (useCache && analysis) {
+          return cache.publish(events.ANALYSIS_DONE, analysis)
+        } else {
+          return cache.lpush('queue', url)
+            .then((count) => cache.publish(events.QUEUE_PUSH, count))
+        }
       })
+      .catch((err) => {
+        log.error(err)
+        sse.emit('error')
+        res.end()
+      })
+  })
+})
+
+app.get('*', (req, res) => {
+  renderServerRoute({ location: req.originalUrl })
+    .then(({ redirect, html }) => {
+      if (redirect) {
+        res.redirect(302, redirect.pathname + redirect.search)
+      } else {
+        // Server push hints (supported by cloudflare-nginx)
+        // https://w3c.github.io/preload/
+        // TODO move logic somewhere else?
+        res.header('Link', [
+          '</pure.min.css>; rel=preload; as=style;',
+          '</app.bundle.css>; rel=preload; as=style;',
+          '</init.bundle.js>; rel=preload; as=script;'
+        ])
+        // const etag = crypto.createHash('md5').update(html).digest('hex')
+        // res.header('ETag', etag)
+        if (IS_DEV) res.cookie('nocache', true)
+        res.status(200).send(html)
+      }
     })
     .catch((err) => {
-      console.error(err)
-      hookOpts.headers['Last-Event'] = 'analysis:error'
-      webhook(hookOpts, {
-        host: url.hostname,
-        analysis: null,
-        har: null,
-        error: err.message
-      })
+      console.log(err.stack)
+      res.status(500).end()
     })
 })
 
-app.get('/protocols', (req, res) => {
-  req.checkQuery('url').notEmpty()
-  req.checkQuery('protocols').optional().isArray()
-  req.sanitizeQuery('url').toURL()
-  const errors = req.validationErrors()
-  if (errors) {
-    return res.status(400).send({ errors: errors })
-  } else {
-    return getProtocols(req.query.url.hostname, req.query.protocols)
-      .then((result) => res.send(result))
-  }
-})
-
-app.post('/protocols', (req, res) => {
-  req.checkQuery('url').notEmpty()
-  req.sanitize('url').toURL()
-  req.check('protocols').optional().isArray()
-  const errors = req.validationErrors()
-  if (errors) {
-    return res.status(400).send({ errors: errors })
-  } else {
-    return getProtocols(req.body.url.hostname, req.body.protocols)
-      .then((result) => res.send(result))
-  }
-})
-
-export const server = app.listen(PORT, () => {
-  console.log('Server running on port ' + PORT)
+// Start server
+http.createServer(app).listen(PORT, () => {
+  log.info('Server running on port %d in %s mode...', PORT, ENV)
+  const { processQueue } = createWorker({ DEV: IS_DEV })
+  const QUEUE_INTEVAL = 1000
+  log.info('Server processing queue every %sms', QUEUE_INTEVAL)
+  setInterval(processQueue, QUEUE_INTEVAL)
 })

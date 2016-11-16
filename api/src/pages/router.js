@@ -4,7 +4,6 @@ import { renderToString, renderToStaticMarkup } from 'react-dom/server'
 import history from 'react-router/lib/browserHistory'
 import IndexRoute from 'react-router/lib/IndexRoute'
 import match from 'react-router/lib/match'
-import Redirect from 'react-router/lib/Redirect'
 import Route from 'react-router/lib/Route'
 import Router from 'react-router/lib/Router'
 import RouterContext from 'react-router/lib/RouterContext'
@@ -22,7 +21,6 @@ export const routes = (
 <Route path='/' component={Root}>
   <IndexRoute component={Index} />a
   <Route path='analyze' component={Analyze} />
-  <Redirect from='*' to='/' />
 </Route>
 )
 

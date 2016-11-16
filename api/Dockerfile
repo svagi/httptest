@@ -1,12 +1,10 @@
-FROM node:6.1.0-slim
+FROM node:7.0.0-slim
 MAINTAINER Jan Svager <jan@svager.cz>
-# Data
-ENV API_DATA_DIR /data
-VOLUME $API_DATA_DIR
-RUN chmod -R 777 $API_DATA_DIR
-# Source
+ENV TERM=xterm
 WORKDIR /api
 COPY package.json .
 RUN npm install --no-optional --quiet
 COPY . .
-CMD ["npm", "start"]
+RUN chmod +x ./entrypoint.sh
+ENTRYPOINT ["./entrypoint.sh"]
+CMD ["production"]
