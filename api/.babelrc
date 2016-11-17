@@ -1,0 +1,29 @@
+{
+    "presets": ["react", "stage-3"],
+    "env": {
+        "node": {
+            "presets": [
+                [
+                    "env", {
+                        "targets": {
+                            "node": "current"
+                        },
+                        "debug": false
+                    }
+                ]
+            ],
+        },
+        "webpack": {
+            "presets": [
+                [
+                    "env", {
+                        "targets": {
+                            "browsers": ["last 2 versions"]
+                        },
+                        "debug": false
+                    }
+                ]
+            ],
+        }
+    }
+}
