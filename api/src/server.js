@@ -222,6 +222,7 @@ const worker = createWorker({
     port: 9222,
     fetchContent: true
   },
-  interval: 500
+  interval: 500,
+  ttl: 3600 // 1 hour
 })
 worker.processQueue()

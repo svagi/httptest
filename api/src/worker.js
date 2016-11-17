@@ -2,7 +2,7 @@ import capturer from 'chrome-har-capturer'
 // import log from './debug'
 import analyze from './analysis/analyze'
 
-export default function createWorker ({ cache, chromeConfig, interval }) {
+export default function createWorker ({ cache, chromeConfig, interval, ttl }) {
   const worker = {
     async processQueue () {
       const url = await cache.rpop('queue')
@@ -31,7 +31,7 @@ export default function createWorker ({ cache, chromeConfig, interval }) {
       cache.publish(`analysis-start:${url}`, null)
       const analysis = JSON.stringify(analyze(har.data))
       cache.publish(`analysis-done:${url}`, analysis)
-      await cache.set(`analysis:${url}`, analysis)
+      await cache.setex(`analysis:${url}`, ttl, analysis)
       return analysis
     }
   }
