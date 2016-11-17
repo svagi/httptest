@@ -1,6 +1,7 @@
 # Development configuration
 version: "2"
 volumes:
+  api_static: {}
   cache_data: {}
 services:
   api:
@@ -14,20 +15,20 @@ services:
     depends_on:
      - cache
     volumes:
-      - /api/static
+      - api_static:/api/static
       - ./api/src:/api/src
       - ./api/package.json:/api/package.json
       - ./api/webpack.config.js:/api/webpack.config.js
-    expose:
-      - "8000"
-    command: development
+    ports:
+      - "8000:8000" # DEV only!
+    command: run watch
   proxy:
     build: ./proxy
     container_name: httptest_proxy
     depends_on:
       - api
-    volumes_from:
-      - api
+    volumes:
+      - api_static:/api/static
     ports:
       - "80:80"
       - "443:443"
@@ -39,9 +40,8 @@ services:
     ports:
       - "6379:6379" # DEV only!
   chrome:
-    image: yukinying/chrome-headless:56.0.2920.2
+    build: ./chrome
     container_name: httptest_chrome
-    command: --enable-benchmarking --enable-net-benchmarking
     shm_size: 256m
     ports:
       - "9222:9222"

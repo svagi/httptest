@@ -9,7 +9,6 @@ export default class Html extends React.Component {
             {this.props.title}
           </title>
           <meta name='viewport' content='width=device-width, initial-scale=1' />
-          <link type='text/css' rel='stylesheet' href='/pure.min.css' />
           <link type='text/css' rel='stylesheet' href='/app.bundle.css' />
           <link rel='dns-prefetch' href='https://github.com/' />
           <link rel='dns-prefetch' href='https://www.svager.cz/' />

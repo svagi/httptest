@@ -3,6 +3,7 @@ import express from 'express'
 import http from 'http'
 import morgan from 'morgan'
 import Redis from 'ioredis'
+import etag from 'etag'
 
 import { renderServerRoute } from './pages/router'
 import log from './debug'
@@ -77,10 +78,7 @@ app.disable('x-powered-by')
 app.set('etag', 'strong')
 
 // Setup custom morgan format
-app.use(morgan(IS_DEV
-  ? ':method :url :status HTTP/:http-version :response-time ms - ":user-agent"'
-  : '[:date[iso]] :method :url :status HTTP/:http-version :response-time ms - ":user-agent"'
-))
+app.use(morgan('[:date[iso]] :method :url :status HTTP/:http-version :response-time ms'))
 
 // Retrieve analysis
 app.get('/analysis', (req, res) => {
@@ -190,22 +188,23 @@ app.get('*', (req, res) => {
       if (redirect) {
         res.redirect(302, redirect.pathname + redirect.search)
       } else {
-        // Server push hints (supported by cloudflare-nginx)
-        // https://w3c.github.io/preload/
-        // TODO move logic somewhere else?
-        res.header('Link', [
-          '</pure.min.css>; rel=preload; as=style;',
-          '</app.bundle.css>; rel=preload; as=style;',
-          '</init.bundle.js>; rel=preload; as=script;'
-        ])
-        // const etag = crypto.createHash('md5').update(html).digest('hex')
-        // res.header('ETag', etag)
-        if (IS_DEV) res.cookie('nocache', true)
-        res.status(200).send(html)
+        res.writeHead(200, {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Content-Length': Buffer.byteLength(html, 'utf-8'),
+          'Cache-Control': 'no-cache',
+          // Server push hints (supported by cloudflare-nginx)
+          // https://w3c.github.io/preload/
+          'Link': [
+            '</app.bundle.css>; rel=preload; as=style;',
+            '</init.bundle.js>; rel=preload; as=script;'
+          ],
+          'Etag': etag(html)
+        })
+        res.end(html)
       }
     })
     .catch((err) => {
-      console.log(err.stack)
+      log.error(err)
       res.status(500).end()
     })
 })

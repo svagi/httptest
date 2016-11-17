@@ -21,9 +21,12 @@ export default class Analyze extends React.Component {
   }
   componentDidMount () {
     require('./Analyze.css')
-    const { url } = this.props.location.query
+    const { url, purge } = this.props.location.query
     if (!url) return history.push('/')
-    const source = this.source = new window.EventSource(`/events?url=${url}`)
+    const encUrl = encodeURIComponent(url)
+    const useCache = typeof purge === 'undefined'
+    const endpoint = `/events?url=${encUrl}${useCache ? '' : '&purge'}`
+    const source = this.source = new window.EventSource(endpoint)
     source.addEventListener('open', (e) => {
       this.setState({
         status: STATUS.CONNECTING

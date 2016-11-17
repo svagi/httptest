@@ -5,6 +5,7 @@ export default function ({ log = {} }) {
   const { pages = [], entries = [] } = log
   const firstEntry = entries[0]
   if (!firstEntry) {
+    console.log(log)
     throw new Error('Invalid HAR')
   }
   let totalRedirects = 0

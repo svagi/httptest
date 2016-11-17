@@ -12,5 +12,7 @@ if [ "$1" = 'development' ]; then
 fi
 
 if [ "$1" = 'production' ]; then
-
+  exec node_modules/.bin/babel src -d build \
+    && node_modules/.bin/webpack --colors \
+    && node build/server.js
 fi
