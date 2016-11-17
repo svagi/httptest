@@ -13,7 +13,7 @@ export default class Analysis extends React.Component {
     return (
       <div id='analysis'>
         <header>
-        Page rules
+        Document
         </header>
         <section>
           <div className='rule'>
@@ -37,24 +37,38 @@ export default class Analysis extends React.Component {
           <div className='rule'>
             <header>
               <span className='left'>Time to first Byte (TTFB)</span>
-              <span className='right'>{page.timeToFirstByte ? <span>{page.timeToFirstByte / 1000} s</span> : '-'}</span>
+              <span className='right'>
+                {page.timeToFirstByte
+                  ? <span>{(page.timeToFirstByte / 1000).toFixed(3)}s</span>
+                  : '-'}
+              </span>
             </header>
           </div>
           <div className='rule'>
             <header>
               <span className='left'>DOM load time</span>
-              <span className='right'>{page.domLoadTime ? <span>{page.domLoadTime / 1000} s</span> : '-'}</span>
+              <span className='right'>
+                {page.domLoadTime
+                  ? <span>{(page.domLoadTime / 1000).toFixed(3)}s</span>
+                  : '-'
+                }
+              </span>
             </header>
           </div>
           <div className='rule'>
             <header>
               <span className='left'>Load time</span>
-              <span className='right'>{page.loadTime ? <span>{page.loadTime / 1000} s</span> : '-'}</span>
+              <span className='right'>
+                {page.loadTime
+                  ? <span>{(page.loadTime / 1000).toFixed(3)}s</span>
+                  : '-'
+                }
+              </span>
             </header>
           </div>
           <div className='rule'>
             <header>
-              <span className='left'>Total page size</span>
+              <span className='left'>Document size</span>
               <span className='right'>{page.totalBytes / 1000} kB</span>
             </header>
           </div>

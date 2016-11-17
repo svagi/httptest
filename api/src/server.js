@@ -209,11 +209,22 @@ app.get('*', (req, res) => {
     })
 })
 
-// Start server
+// Start server & queue processing
 http.createServer(app).listen(PORT, () => {
   log.info('Server running on port %d in %s mode...', PORT, ENV)
-  const { processQueue } = createWorker({ DEV: IS_DEV })
   const QUEUE_INTEVAL = 1000
+  const { processQueue } = createWorker({
+    cache: cache.duplicate(),
+    chromeConfig: {
+      host: 'chrome',
+      port: 9222,
+      fetchContent: true
+    }
+  })
   log.info('Server processing queue every %sms', QUEUE_INTEVAL)
-  setInterval(processQueue, QUEUE_INTEVAL)
+  try {
+    setInterval(processQueue, QUEUE_INTEVAL)
+  } catch (err) {
+    log.error(err)
+  }
 })

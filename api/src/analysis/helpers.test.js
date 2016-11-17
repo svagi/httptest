@@ -1,15 +1,15 @@
 import test from 'ava'
-import datasets from './datasets'
+import { datasets, domains } from './datasets'
 import * as helpers from './helpers'
 
-const har = datasets['http://seznam.cz']
-
-test('Convert array headers to object headers', (t) => {
-  const arrayHeaders = har.log.entries[0].request.headers
-  const objectHeaders = helpers.convertHeaders(arrayHeaders)
-  t.is(typeof objectHeaders, 'object')
-  t.is(arrayHeaders.length, Object.keys(objectHeaders).length)
-})
+domains.forEach(domain => datasets[domain].forEach((har, idx) => {
+  test(`[${idx}|${domain}] Convert array headers to object headers`, (t) => {
+    const arrayHeaders = har.log.entries[0].request.headers
+    const objectHeaders = helpers.convertHeaders(arrayHeaders)
+    t.is(typeof objectHeaders, 'object')
+    t.is(arrayHeaders.length, Object.keys(objectHeaders).length)
+  })
+}))
 
 test('Normalize score value', (t) => {
   t.is(helpers.normalizeScore(-100), 0)

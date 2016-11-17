@@ -77,7 +77,7 @@ export function reduceRedirects (connections, opts = {}) {
     score: 100 - (penalty * count),
     description: 'HTTP redirects impose high latency overhead. The optimal number of redirects is zero.',
     reason: `There ${_('is', count)} ${_('redirect', count, true)}`,
-    values: entries.map((entry) => `(${entry.status}) ${entry.url} -> ${entry.redirectUrl}`),
+    values: entries.map((entry) => `(${entry.status}) ${entry.url} -> ${entry.redirectUrl || '-'}`),
     count: count
   })
 }
@@ -144,7 +144,7 @@ export function useServerPush (page, connections, opts = {}) {
   const entries = connections.filter((entry) => {
     return entry.bodySize < minSize &&
     contentTypeRegex.test(entry.reqHeaders['accept']) &&
-    entry.reqHeaders['host'] === page.host
+    entry.hostname === page.hostname
   })
   const h2entries = entries.filter(entry => {
     return entry.isHttp2 && !(entry.status === 0)
