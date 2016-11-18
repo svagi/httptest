@@ -115,13 +115,27 @@ export function eliminateNotFoundRequests ({ entries, ...opts }) {
   })
 }
 
-export function eliminateDomainSharding ({ page }) {
-  // TODO
+export function eliminateDomainSharding ({ page, entries, opts = {} }) {
+  const { penalty = 25, limit = 1 } = opts
+  const http2entries = entries.filter(entry => entry.isHttp2)
+  const reverseDns = http2entries
+    .reduce((obj, entry) => {
+      const domains = obj[entry.ip]
+      obj[entry.ip] = domains ? domains.add(entry.hostname) : new Set()
+      return obj
+    }, {})
+  const subEntries = Object.keys(reverseDns)
+    .filter(ip => reverseDns[ip].size >= 2)
+  const count = subEntries
+    .map(ip => reverseDns[ip].size - limit)
+    .reduce((a, b) => a + b, 0)
   return normalizeRule({
     title: 'HTTP/2: Elimiminate domain sharding',
-    score: page.isHttp2 ? 100 : null,
+    score: http2entries.length > 0 ? 100 - (count * penalty) : null,
     description: 'Under HTTP/1 parallelism is limited by number of TCP connections (in practice ~6 connections per origin). However, each of these connections incur unnecessary overhead and compete with each other for bandwidth. Domain sharding should be avoided in HTTP/2.',
-    reason: ''
+    reason: '',
+    count: count,
+    values: subEntries.map(ip => `${ip} -> ${[...reverseDns[ip]].join(', ')}`)
   })
 }
 

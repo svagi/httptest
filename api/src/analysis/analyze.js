@@ -22,6 +22,7 @@ export default function ({ log = {} }) {
     const url = parseUrl(req.url)
     const hostname = url.hostname
     const status = res.status
+    const ip = entry.serverIPAddress
     // Fake spdy -> http/2 Chrome headless bug
     // https://groups.google.com/a/chromium.org/forum/#!topic/headless-dev/lysNMNgqFrI
     const httpVersion = res.httpVersion.replace('spdy', 'http/2')
@@ -29,7 +30,7 @@ export default function ({ log = {} }) {
     const isHtml = /text\/html/i.test(res.content.mimeType)
     const isRedirect = checkRedirect(status)
     // Capture all domains
-    dns[hostname] = entry.serverIPAddress
+    dns[hostname] = ip
     // Capture all HTTP/2 requests
     if (isHttp2) {
       http2Requests += 1
@@ -42,6 +43,7 @@ export default function ({ log = {} }) {
       bodySize: res.bodySize,
       hostname: hostname,
       httpVersion: httpVersion,
+      ip: ip,
       isHttp2: isHttp2,
       isRedirect: isRedirect,
       redirectUrl: res.redirectURL,
