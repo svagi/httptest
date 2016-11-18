@@ -1,13 +1,13 @@
 import _ from 'pluralize'
 import { normalizeRule } from './helpers'
 
-export function reuseTCPconnections (page, connections, opts = {}) {
+export function reuseTCPconnections ({ page, entries, ...opts }) {
   const { penalty = 5 } = opts
-  const entries = connections.filter((conn) => {
+  const subEntries = entries.filter((conn) => {
     const headers = conn.resHeaders
     return !(headers['connection'] !== 'close')
   })
-  const count = entries.length
+  const count = subEntries.length
   const limit = page.dnsLookups
   let score = 100
   if (count > limit) {
@@ -18,19 +18,19 @@ export function reuseTCPconnections (page, connections, opts = {}) {
     score: score,
     description: 'Persistent connections allow multiple HTTP requests use the same TCP connection, thus eliminates TCP handshakes and slow-start latency overhead. Use HTTP/2 or try to enable Keep-Alive.',
     reason: `There ${_('is', count)} ${count} immediately terminated ${_('connection', count)}`,
-    values: entries.map(entry => entry.url),
+    values: subEntries.map(entry => entry.url),
     count: count
   })
 }
-export function useCaching (connections, opts = {}) {
+export function useCaching ({ page, entries, ...opts }) {
   const { limit = 1, penalty = 5 } = opts
   // TODO content type
-  const entries = connections.filter((conn) => {
+  const subEntries = entries.filter((conn) => {
     const headers = conn.resHeaders
     return conn.status === 200 &&
     (!headers['cache-control'] || !headers['expires'])
   })
-  const count = entries.length
+  const count = subEntries.length
   let score = 100
   if (count > limit) {
     score -= (penalty * (count - limit))
@@ -40,49 +40,49 @@ export function useCaching (connections, opts = {}) {
     score: score,
     description: 'Reduce the load times of pages by storing commonly used files from your website on your visitors browser.',
     reason: `There ${_('is', count)} ${_('resource', count, true)} without expiration time`,
-    values: entries.map(entry => entry.url),
+    values: subEntries.map(entry => entry.url),
     count: count
   })
 }
-export function useCompression (connections, opts = {}) {
+export function useCompression ({ page, entries, ...opts }) {
   const { minSize = 256, penalty = 5 } = opts
   const contentTypeRegex = /text\/(?:plain|html|css|javascript)|application\/(?:javascript|json|ld\+json|xml|atom\+xml)/
   const contentEncodingRegex = /compress|gzip|deflate|bzip2/
-  const entries = connections.filter((conn) => {
+  const subEntries = entries.filter((conn) => {
     const headers = conn.resHeaders
     return (
-    (conn.status === 200 || conn.status === 304) &&
-    conn.bodySize > minSize &&
-    contentTypeRegex.test(headers['content-type']) &&
-    !contentEncodingRegex.test(headers['content-encoding'])
+      (conn.status === 200 || conn.status === 304) &&
+      conn.bodySize > minSize &&
+      contentTypeRegex.test(headers['content-type']) &&
+      !contentEncodingRegex.test(headers['content-encoding'])
     )
   })
-  const count = entries.length
+  const count = subEntries.length
   const score = 100 - (penalty * count)
   return normalizeRule({
     title: 'Compress assets',
     score: score,
     description: 'Application resources should be transferred with the minimum number of bytes. Always apply the best compression method for each transferred asset.',
     reason: `There ${_('is', count)} ${_('resource', count, true)} without compression`,
-    values: entries.map(entry => entry.url),
+    values: subEntries.map(entry => entry.url),
     count: count
   })
 }
-export function reduceRedirects (connections, opts = {}) {
+export function reduceRedirects ({ page, entries, ...opts }) {
   const { penalty = 25 } = opts
-  const entries = connections.filter((conn) => conn.isRedirect)
-  const count = entries.length
+  const subEntries = entries.filter((conn) => conn.isRedirect)
+  const count = subEntries.length
   return normalizeRule({
     title: 'Minimize number of HTTP redirects',
     score: 100 - (penalty * count),
     description: 'HTTP redirects impose high latency overhead. The optimal number of redirects is zero.',
     reason: `There ${_('is', count)} ${_('redirect', count, true)}`,
-    values: entries.map((entry) => `(${entry.status}) ${entry.url} -> ${entry.redirectUrl || '-'}`),
+    values: subEntries.map((entry) => `(${entry.status}) ${entry.url} -> ${entry.redirectUrl || '-'}`),
     count: count
   })
 }
 
-export function reduceDNSlookups (page, opts = {}) {
+export function reduceDNSlookups ({ page, ...opts }) {
   const { limit = 4, penalty = 5 } = opts
   const { dns, dnsLookups } = page
   // TODO reduce limit for HTTP2?
@@ -99,36 +99,23 @@ export function reduceDNSlookups (page, opts = {}) {
   })
 }
 
-export function eliminateRedundancy () {
-  return {
-    title: 'Eliminate unnecessary bytes and requests',
-    score: 0
-  }
-}
-export function eliminateNotFoundRequests (connections, opts = {}) {
+export function eliminateNotFoundRequests ({ entries, ...opts }) {
   const { penalty = 10 } = opts
-  const entries = connections.filter((conn) => {
+  const subEntries = entries.filter((conn) => {
     return conn.status === 404 || conn.status === 410
   })
-  const count = entries.length
+  const count = subEntries.length
   return normalizeRule({
     title: 'Eliminate requests to non-existent resources',
     score: 100 - (count * penalty),
     description: 'Avoid fetching content that does not exist.',
     reason: count > 0 ? `There ${_('is', count)} ${_('resource', count, true)} that not exists` : '',
-    values: entries.map(entry => `(${entry.status}) ${entry.url}`),
+    values: subEntries.map(entry => `(${entry.status}) ${entry.url}`),
     count: count
   })
 }
-export function useCDN () {
-  return normalizeRule({
-    title: 'Use a Content Delivery Network (CDN)',
-    score: 0,
-    description: ''
-  })
-}
 
-export function eliminateDomainSharding (page) {
+export function eliminateDomainSharding ({ page }) {
   // TODO
   return normalizeRule({
     title: 'HTTP/2: Elimiminate domain sharding',
@@ -138,19 +125,19 @@ export function eliminateDomainSharding (page) {
   })
 }
 
-export function useServerPush (page, connections, opts = {}) {
+export function useServerPush ({ page, entries, ...opts }) {
   const { minSize = 30000, penalty = 5 } = opts
   const contentTypeRegex = /.*(?:text\/(?:css|javascript)|(?:application\/javascript)).*/
-  const entries = connections.filter((entry) => {
+  const subEntries = entries.filter((entry) => {
     return entry.bodySize < minSize &&
     contentTypeRegex.test(entry.reqHeaders['accept']) &&
     entry.hostname === page.hostname
   })
-  const h2entries = entries.filter(entry => {
+  const h2entries = subEntries.filter(entry => {
     return entry.isHttp2 && !(entry.status === 0)
   })
 
-  const values = page.isHttp2 ? h2entries : entries
+  const values = page.isHttp2 ? h2entries : subEntries
   const count = values.length
   const score = page.isHttp2 ? 100 - (penalty * count) : null
   return normalizeRule({
@@ -163,20 +150,20 @@ export function useServerPush (page, connections, opts = {}) {
   })
 }
 
-export function avoidConcatenating (stats, connections, opts = {}) {
+export function avoidConcatenating ({ page, entries, ...opts }) {
   const { maxSize = 70000, penalty = 5 } = opts
   const contentTypeRegex = /text\/(?:css|javascript)|application\/javascript/
-  const entries = connections.filter((entry) => {
+  const subEntries = entries.filter((entry) => {
     return entry.bodySize > maxSize &&
     contentTypeRegex.test(entry.reqHeaders['accept'])
   })
-  const count = entries.length
+  const count = subEntries.length
   return normalizeRule({
     title: 'HTTP/2: Avoid resource concatenating',
-    score: stats.isHttp2 ? 100 - (penalty * count) : null,
+    score: page.isHttp2 ? 100 - (penalty * count) : null,
     description: 'Ship small granular resources and optimize caching policies. Significant wins in compression are the only case where it might be useful.',
     reason: '',
-    values: entries.map(entry => `${entry.url} (${entry.bodySize}) B`),
+    values: subEntries.map(entry => `${entry.url} (${entry.bodySize}) B`),
     count: count
   })
 }

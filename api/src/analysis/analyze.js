@@ -14,7 +14,7 @@ export default function ({ log = {} }) {
   let dns = {}
   let isPage = false
   let page = pages[0]
-  const connections = entries.map((entry, idx) => {
+  const parsedEntries = entries.map((entry, idx) => {
     const req = entry.request
     const res = entry.response
     const reqHeaders = convertHeaders(req.headers)
@@ -65,7 +65,7 @@ export default function ({ log = {} }) {
     }
     return newEntry
   })
-  const pageStats = {
+  const parsedPage = {
     // Total number of requests
     totalRequests: entries.length,
     // Total number of redirects
@@ -93,21 +93,14 @@ export default function ({ log = {} }) {
     timeToFirstByte: page.pageTimings.onFirstByte
   }
   // console.log(pageStats)
-
+  const parsedResult = { page: parsedPage, entries: parsedEntries }
   // Analysis object
   const analysis = {
-    page: pageStats,
-    rules: {
-      reuseTCPconnections: rules.reuseTCPconnections(pageStats, connections),
-      useCaching: rules.useCaching(connections),
-      useCompression: rules.useCompression(connections),
-      reduceRedirects: rules.reduceRedirects(connections),
-      reduceDNSlookups: rules.reduceDNSlookups(pageStats),
-      eliminateNotFoundRequests: rules.eliminateNotFoundRequests(connections),
-      eliminateDomainSharding: rules.eliminateDomainSharding(pageStats),
-      useServerPush: rules.useServerPush(pageStats, connections),
-      avoidConcatenating: rules.avoidConcatenating(pageStats, connections)
-    }
+    page: parsedPage,
+    rules: Object.keys(rules).reduce((obj, rule) => {
+      obj[rule] = rules[rule](parsedResult)
+      return obj
+    }, {})
   }
   // console.log(analysis.rules.reduceRedirects)
   return analysis
