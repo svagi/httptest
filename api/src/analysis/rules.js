@@ -1,5 +1,5 @@
 import _ from 'pluralize'
-import { normalizeScore, normalizeReason, sum } from './helpers'
+import { normalizeScore, normalizeReason, sum, regex } from './helpers'
 
 // Main rule wrapper with properties normalization
 function rule (props) {
@@ -35,6 +35,7 @@ export function cacheAssets ({ page, entries, ...opts }) {
     const headers = entry.resHeaders
     return !entry.isRedirect &&
       entry.isValid &&
+      !entry.isRedirect &&
       (!headers['cache-control'] || !headers['expires'])
   })
   const count = values.length
@@ -53,25 +54,24 @@ export function cacheAssets ({ page, entries, ...opts }) {
 }
 export function compressAssets ({ page, entries, ...opts }) {
   const { minSize = 256, penalty = 5 } = opts
-  const contentTypeRegex = /text\/(?:plain|html|css|javascript)|application\/(?:javascript|json|ld\+json|xml|atom\+xml)/
-  const contentEncodingRegex = /compress|gzip|deflate|bzip2/
-  const subEntries = entries.filter((entry) => {
+  const values = entries.filter((entry) => {
     const headers = entry.resHeaders
     return (
       entry.isValid &&
+      !entry.isRedirect &&
       entry.content.size >= minSize &&
-      contentTypeRegex.test(headers['content-type']) &&
-      !contentEncodingRegex.test(headers['content-encoding'])
+      regex.text.test(entry.content.mimeType) &&
+      !regex.encoding.test(headers['content-encoding'])
     )
   })
-  const count = subEntries.length
+  const count = values.length
   const score = 100 - (penalty * count)
   return rule({
     title: 'Compress assets',
     score: score,
     description: 'Application resources should be transferred with the minimum number of bytes. Always apply the best compression method for each transferred asset.',
     reason: `There ${_('is', count)} ${_('resource', count, true)} without compression`,
-    values: subEntries.map(entry => entry.url.href),
+    values: values.map(entry => entry.url.href),
     count: count
   })
 }
@@ -150,11 +150,10 @@ export function eliminateDomainSharding ({ page, entries, opts = {} }) {
 
 export function useServerPush ({ page, entries, ...opts }) {
   const { maxSize = 5000 } = opts
-  const contentTypeRegex = /.*(?:text\/(?:css|javascript)|(?:application\/javascript)).*/
   const values = entries.filter(entry => (
     entry.isValid &&
     entry.isHttp2 &&
-    contentTypeRegex.test(entry.content.mimeType) &&
+    regex.jsOrCss.test(entry.content.mimeType) &&
     entry.content.size <= maxSize
   ))
   const count = values.length
@@ -170,10 +169,9 @@ export function useServerPush ({ page, entries, ...opts }) {
 
 export function avoidConcatenating ({ page, entries, ...opts }) {
   const { maxSize = 70000, penalty = 5 } = opts
-  const contentTypeRegex = /text\/(?:css|javascript)|application\/javascript/
   const values = entries.filter((entry) => {
     return entry.content.size >= maxSize &&
-    contentTypeRegex.test(entry.content.mimeType)
+    regex.jsOrCss.test(entry.content.mimeType)
   })
   const count = values.length
   return rule({

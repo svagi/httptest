@@ -2,6 +2,36 @@ import test from 'ava'
 import { datasets, domains } from './datasets'
 import * as helpers from './helpers'
 
+test('Test all regexes', (t) => {
+  const { text, jsOrCss, encoding } = helpers.regex
+  // text
+  t.false(text.test(''))
+  t.true(text.test('text/plain'))
+  t.true(text.test('text/html'))
+  t.true(text.test('text/css'))
+  t.true(text.test('text/javascript'))
+  t.false(text.test('text/x-unknown'))
+  t.true(text.test('application/javascript'))
+  t.true(text.test('application/json'))
+  t.true(text.test('application/ld+json'))
+  t.true(text.test('application/xml'))
+  t.true(text.test('application/atom+xml'))
+  t.false(text.test('application/x-unknown'))
+  // js or css
+  t.false(jsOrCss.test(''))
+  t.true(jsOrCss.test('text/javascript'))
+  t.true(jsOrCss.test('text/css'))
+  t.false(jsOrCss.test('text/x-unknown'))
+  t.true(jsOrCss.test('application/javascript'))
+  t.false(jsOrCss.test('application/x-unknown'))
+  // encoding
+  t.false(encoding.test(''))
+  t.true(encoding.test('compress'))
+  t.true(encoding.test('gzip'))
+  t.true(encoding.test('deflate'))
+  t.true(encoding.test('bzip2'))
+})
+
 domains.forEach(domain => datasets[domain].forEach((har, idx) => {
   test(`[${idx}|${domain}] Convert array headers to object headers`, (t) => {
     const arrayHeaders = har.log.entries[0].request.headers

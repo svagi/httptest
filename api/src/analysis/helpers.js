@@ -1,3 +1,10 @@
+// Mime-type regexes
+export const regex = {
+  text: /text\/(?:plain|html|css|javascript)|application\/(?:javascript|json|ld\+json|xml|atom\+xml)/i,
+  jsOrCss: /text\/(?:css|javascript)|application\/javascript/i,
+  encoding: /compress|gzip|deflate|bzip2/i
+}
+
 // Convert headers from array to object
 export function convertHeaders (arrayHeaders) {
   return arrayHeaders.reduce((objHeaders, header) => {
