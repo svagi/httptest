@@ -2,7 +2,7 @@ import { parse as parseUrl } from 'url'
 import * as rules from './rules'
 import { convertHeaders, checkRedirect, checkStatus } from './helpers'
 
-export default function ({ log = {} }) {
+export function parseHAR ({ log = {} }) {
   const { pages = [], entries = [] } = log
   let dns = {}
   let http2Requests = 0
@@ -64,53 +64,53 @@ export default function ({ log = {} }) {
     if (isHtml && !isRedirect && !isPage) {
       page = {
         ...newEntry,
-        pageTimings: {
-          ...page.pageTimings,
-          onFirstByte: entry.timings.wait
-        }
+        pageTimings: { ...page.pageTimings, onFirstByte: entry.timings.wait }
       }
       isPage = true
     }
     return newEntry
   })
-  const parsedPage = {
-    // Total number of requests
-    totalRequests: entries.length,
-    // Total number of redirects
-    totalRedirects: totalRedirects,
-    // Check if html page is redirected
-    isRedirect: page.isRedirect,
-    // Check if page is HTTP/2
-    isHttp2: page.isHttp2,
-    // Page protocol
-    protocol: page.httpVersion,
-    // Page host name
-    hostname: page.hostname,
-    // Number of http2 requests
-    http2Requests: http2Requests,
-    // Total number of bytes (overall size)
-    totalBytes: totalBytes,
-    // DOM load time
-    domLoadTime: page.pageTimings.onContentLoad,
-    // Full page load time
-    loadTime: page.pageTimings.onLoad,
-    // Array of all requested domains
-    dns: dns,
-    dnsLookups: Object.keys(dns).length,
-    // TTFB
-    timeToFirstByte: page.pageTimings.onFirstByte
+  return {
+    entries: parsedEntries,
+    page: {
+      // Total number of requests
+      totalRequests: entries.length,
+      // Total number of redirects
+      totalRedirects: totalRedirects,
+      // Check if html page is redirected
+      isRedirect: page.isRedirect,
+      // Check if page is HTTP/2
+      isHttp2: page.isHttp2,
+      // Page protocol
+      protocol: page.httpVersion,
+      // Page host name
+      hostname: page.hostname,
+      // Number of http2 requests
+      http2Requests: http2Requests,
+      // Total number of bytes (overall size)
+      totalBytes: totalBytes,
+      // DOM load time
+      domLoadTime: page.pageTimings.onContentLoad,
+      // Full page load time
+      loadTime: page.pageTimings.onLoad,
+      // Array of all requested domains
+      dns: dns,
+      dnsLookups: Object.keys(dns).length,
+      // TTFB
+      timeToFirstByte: page.pageTimings.onFirstByte
+    }
   }
-  // console.log(pageStats)
-  const parsedResult = { page: parsedPage, entries: parsedEntries }
+}
+
+export default function (har) {
+  const data = parseHAR(har)
   // Analysis object
   const analysis = {
-    page: parsedPage,
+    page: data.page,
     rules: Object.keys(rules).reduce((obj, rule) => {
-      obj[rule] = rules[rule](parsedResult)
+      obj[rule] = rules[rule](data)
       return obj
     }, {})
   }
-  console.log(analysis.page)
-  console.log(analysis.rules)
   return analysis
 }

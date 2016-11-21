@@ -39,7 +39,21 @@ test('Check redirect by status code', (t) => {
   t.true(helpers.checkRedirect(307))
 })
 
+test('Check non-error status code', (t) => {
+  t.false(helpers.checkStatus(199))
+  t.true(helpers.checkStatus(200))
+  t.true(helpers.checkStatus(201))
+  t.true(helpers.checkStatus(304))
+  t.true(helpers.checkStatus(307))
+  t.false(helpers.checkStatus(400))
+})
+
 test('Unique array values', (t) => {
   t.deepEqual(helpers.uniqArray([1, 2, 2]), [1, 2])
   t.deepEqual(helpers.uniqArray(['a', 'b', 'a']), ['a', 'b'])
+})
+
+test('Sum array values', (t) => {
+  t.is(helpers.sum([]), 0)
+  t.is(helpers.sum([1, 2, 2]), 5)
 })

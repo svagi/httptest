@@ -1,5 +1,12 @@
 import _ from 'pluralize'
-import { normalizeRule, sum } from './helpers'
+import { normalizeScore, normalizeReason, sum } from './helpers'
+
+// Main rule wrapper with properties normalization
+function rule (props) {
+  props.score = normalizeScore(props.score)
+  props.reason = normalizeReason(props.reason, props.count)
+  return props
+}
 
 export function reuseTCPconnections ({ page, entries, ...opts }) {
   const { penalty = 5, limit = 1 } = opts
@@ -13,16 +20,16 @@ export function reuseTCPconnections ({ page, entries, ...opts }) {
   if (count > limit) {
     score -= penalty * (count - limit)
   }
-  return normalizeRule({
+  return rule({
     title: 'Reuse TCP connections',
     score: score,
-    description: 'Persistent connections allow multiple HTTP requests use the same TCP connection, thus eliminates TCP handshakes and slow-start latency overhead. Use HTTP/2 or try to enable Keep-Alive.',
+    description: 'Persistent connections allow multiple HTTP requests use the same TCP connection, thus eliminates TCP handshakes and slow-start latency overhead. Leverage persistent connections whenever possible.',
     reason: `There ${_('is', count)} ${count} immediately terminated ${_('connection', count)}`,
     values: subEntries.map(entry => entry.url.href),
     count: count
   })
 }
-export function useCaching ({ page, entries, ...opts }) {
+export function cacheAssets ({ page, entries, ...opts }) {
   const { limit = 1, penalty = 5 } = opts
   const values = entries.filter((entry) => {
     const headers = entry.resHeaders
@@ -35,16 +42,16 @@ export function useCaching ({ page, entries, ...opts }) {
   if (count > limit) {
     score -= penalty * (count - limit)
   }
-  return normalizeRule({
+  return rule({
     title: 'Cache resources on the client',
     score: score,
-    description: 'Reduce the load times of pages by storing commonly used files from your website on your visitors browser.',
+    description: 'Reduce the load time of your page by storing commonly used files on your visitors browser.',
     reason: `There ${_('is', count)} ${_('resource', count, true)} without expiration time`,
     values: values.map(entry => entry.url.href),
     count: count
   })
 }
-export function useCompression ({ page, entries, ...opts }) {
+export function compressAssets ({ page, entries, ...opts }) {
   const { minSize = 256, penalty = 5 } = opts
   const contentTypeRegex = /text\/(?:plain|html|css|javascript)|application\/(?:javascript|json|ld\+json|xml|atom\+xml)/
   const contentEncodingRegex = /compress|gzip|deflate|bzip2/
@@ -59,7 +66,7 @@ export function useCompression ({ page, entries, ...opts }) {
   })
   const count = subEntries.length
   const score = 100 - (penalty * count)
-  return normalizeRule({
+  return rule({
     title: 'Compress assets',
     score: score,
     description: 'Application resources should be transferred with the minimum number of bytes. Always apply the best compression method for each transferred asset.',
@@ -68,11 +75,12 @@ export function useCompression ({ page, entries, ...opts }) {
     count: count
   })
 }
+
 export function reduceRedirects ({ page, entries, ...opts }) {
   const { penalty = 25 } = opts
   const subEntries = entries.filter((entry) => entry.isRedirect)
   const count = subEntries.length
-  return normalizeRule({
+  return rule({
     title: 'Minimize number of HTTP redirects',
     score: 100 - (penalty * count),
     description: 'HTTP redirects impose high latency overhead. The optimal number of redirects is zero.',
@@ -89,7 +97,7 @@ export function reduceDNSlookups ({ page, ...opts }) {
   if (dnsLookups > limit) {
     score -= penalty * (dnsLookups - limit)
   }
-  return normalizeRule({
+  return rule({
     title: 'Reduce DNS lookups',
     score: score,
     description: 'Making requests to a large number of different hosts can hurt performance.',
@@ -98,17 +106,16 @@ export function reduceDNSlookups ({ page, ...opts }) {
   })
 }
 
-export function eliminateNotFoundRequests ({ entries, ...opts }) {
+export function eliminateBrokenRequests ({ entries, ...opts }) {
   const { penalty = 10 } = opts
-  const values = entries
-    .filter((entry) => entry.status === 404 || entry.status === 410)
+  const values = entries.filter((entry) => entry.status >= 400)
   const count = values.length
   const score = 100 - (count * penalty)
-  return normalizeRule({
-    title: 'Eliminate requests to non-existent resources',
+  return rule({
+    title: 'Eliminate requests to non-existent or broken resources.',
     score: score,
     description: 'Avoid fetching content that does not exist.',
-    reason: count > 0 ? `There ${_('is', count)} ${_('resource', count, true)} that not exists` : '',
+    reason: `There ${_('is', count)} ${_('resource', count, true)} that not exists`,
     values: values.map(entry => `(${entry.status}) ${entry.url.href}`),
     count: count
   })
@@ -129,9 +136,9 @@ export function eliminateDomainSharding ({ page, entries, opts = {} }) {
     }, {})
   const reverseDnsKeys = Object.keys(reverseDns)
   const values = reverseDnsKeys.filter(ip => reverseDns[ip].size >= 2)
-  const count = values.map(ip => reverseDns[ip].size - limit).reduce(sum, 0)
+  const count = sum(values.map(ip => reverseDns[ip].size - limit))
   const score = h2entries.length > 0 ? 100 - (count * penalty) : null
-  return normalizeRule({
+  return rule({
     title: 'HTTP/2: Elimiminate domain sharding',
     score: score,
     description: 'Under HTTP/1 parallelism is limited by number of TCP connections (in practice ~6 connections per origin). However, each of these connections incur unnecessary overhead and compete with each other for bandwidth. Domain sharding should be avoided in HTTP/2.',
@@ -151,7 +158,7 @@ export function useServerPush ({ page, entries, ...opts }) {
     entry.content.size <= maxSize
   ))
   const count = values.length
-  return normalizeRule({
+  return rule({
     title: 'HTTP/2: Eliminate roundtrips with Server Push',
     score: null,
     description: 'Server push enables the server to send multiple responses (in parallel) for a single client request, thus eliminates entire roundtrips of unnecessary network latency.',
@@ -169,7 +176,7 @@ export function avoidConcatenating ({ page, entries, ...opts }) {
     contentTypeRegex.test(entry.content.mimeType)
   })
   const count = values.length
-  return normalizeRule({
+  return rule({
     title: 'HTTP/2: Avoid resource concatenating',
     score: page.isHttp2 ? 100 - (penalty * count) : null,
     description: 'Ship small granular resources and optimize caching policies. Significant wins in compression are the only case where it might be useful.',

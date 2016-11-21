@@ -6,24 +6,14 @@ export function convertHeaders (arrayHeaders) {
   }, {})
 }
 
-// Normalize rule
-export function normalizeRule (rule) {
-  rule.score = normalizeScore(rule.score)
-  rule.reason = normalizeReason(rule.reason, rule.count)
-  return rule
-}
-
-// Normalize score value
-export function normalizeScore (score, opts = {}) {
-  const { min = 0, max = 100 } = opts
+// Normalize score value: min < score < max
+export function normalizeScore (score, { min = 0, max = 100 } = {}) {
   if (!Number.isInteger(score)) return null
-  if (score < min) score = min
-  if (score > max) score = max
-  return score
+  return Math.max(min, Math.min(score, max))
 }
 
 // Normalize reason value
-export function normalizeReason (reason, count = 0) {
+export function normalizeReason (reason, count) {
   return count > 0 ? reason : null
 }
 
@@ -53,7 +43,7 @@ export function uniqArray (arr) {
   return [...new Set(arr)]
 }
 
-// Calculate sum of two values
-export function sum (a, b) {
-  return a + b
+// Calculate sum of values from array
+export function sum (array, startValue = 0) {
+  return array.reduce((a, b) => a + b, startValue)
 }
