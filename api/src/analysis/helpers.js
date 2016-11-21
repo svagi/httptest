@@ -43,7 +43,17 @@ export function checkRedirect (status) {
   return [301, 302, 307].indexOf(status) > -1
 }
 
+// Check if status code is non-error
+export function checkStatus (status) {
+  return status >= 200 && status < 400
+}
+
 // Make values of array unique
 export function uniqArray (arr) {
   return [...new Set(arr)]
+}
+
+// Calculate sum of two values
+export function sum (a, b) {
+  return a + b
 }

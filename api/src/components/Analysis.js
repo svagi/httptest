@@ -13,7 +13,7 @@ export default class Analysis extends React.Component {
     return (
       <div id='analysis'>
         <header>
-        Document
+        Page overview
         </header>
         <section>
           <div className='rule'>
@@ -68,7 +68,7 @@ export default class Analysis extends React.Component {
           </div>
           <div className='rule'>
             <header>
-              <span className='left'>Document size</span>
+              <span className='left'>Total page size</span>
               <span className='right'>{page.totalBytes / 1000} kB</span>
             </header>
           </div>

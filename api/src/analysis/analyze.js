@@ -1,19 +1,15 @@
 import { parse as parseUrl } from 'url'
 import * as rules from './rules'
-import { convertHeaders, checkRedirect } from './helpers'
+import { convertHeaders, checkRedirect, checkStatus } from './helpers'
 
 export default function ({ log = {} }) {
   const { pages = [], entries = [] } = log
-  const firstEntry = entries[0]
-  if (!firstEntry) {
-    console.log(log)
-    throw new Error('Invalid HAR')
-  }
-  let totalRedirects = 0
-  let http2Requests = 0
   let dns = {}
+  let http2Requests = 0
   let isPage = false
   let page = pages[0]
+  let totalBytes = 0
+  let totalRedirects = 0
   const parsedEntries = entries.map((entry, idx) => {
     const req = entry.request
     const res = entry.response
@@ -23,12 +19,15 @@ export default function ({ log = {} }) {
     const hostname = url.hostname
     const status = res.status
     const ip = entry.serverIPAddress
+    const content = res.content
+    const size = content.size
     // Fake spdy -> http/2 Chrome headless bug
     // https://groups.google.com/a/chromium.org/forum/#!topic/headless-dev/lysNMNgqFrI
     const httpVersion = res.httpVersion.replace('spdy', 'http/2')
     const isHttp2 = /http\/2/i.test(httpVersion)
-    const isHtml = /text\/html/i.test(res.content.mimeType)
+    const isHtml = /text\/html/i.test(content.mimeType)
     const isRedirect = checkRedirect(status)
+    const isValid = checkStatus(status)
     // Capture all domains
     dns[hostname] = ip
     // Capture all HTTP/2 requests
@@ -39,25 +38,32 @@ export default function ({ log = {} }) {
     if (isRedirect) {
       totalRedirects += 1
     }
+    // Capture total byte size
+    if (size) {
+      totalBytes += size
+    }
     const newEntry = {
       bodySize: res.bodySize,
+      content: content,
       hostname: hostname,
       httpVersion: httpVersion,
       ip: ip,
       isHttp2: isHttp2,
       isRedirect: isRedirect,
+      isValid: isValid,
       redirectUrl: res.redirectURL,
       reqHeaders: reqHeaders,
       resHeaders: resHeaders,
+      startedDateTime: entry.startedDateTime,
       status: status,
+      time: entry.time,
       timings: entry.timings,
-      url: req.url
+      url: url
     }
     // Set page entry
     if (isHtml && !isRedirect && !isPage) {
       page = {
         ...newEntry,
-        totalBytes: res.content.size,
         pageTimings: {
           ...page.pageTimings,
           onFirstByte: entry.timings.wait
@@ -83,7 +89,7 @@ export default function ({ log = {} }) {
     // Number of http2 requests
     http2Requests: http2Requests,
     // Total number of bytes (overall size)
-    totalBytes: page.totalBytes,
+    totalBytes: totalBytes,
     // DOM load time
     domLoadTime: page.pageTimings.onContentLoad,
     // Full page load time
@@ -104,6 +110,7 @@ export default function ({ log = {} }) {
       return obj
     }, {})
   }
-  // console.log(analysis.rules.reduceRedirects)
+  console.log(analysis.page)
+  console.log(analysis.rules)
   return analysis
 }

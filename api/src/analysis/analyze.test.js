@@ -21,10 +21,6 @@ domains.forEach((domain) => datasets[domain].forEach((har, idx) => {
     t.true(analysis.page.totalRedirects >= 0)
   })
 
-  test(`[${idx}|${domain}] page.isLandingHttp2 property is boolean`, (t) => {
-    t.is(typeof analysis.page.isHttp2, 'boolean')
-  })
-
   test(`[${idx}|${domain}] page.http2Requests is number greater or equeal to zero`, (t) => {
     t.true(analysis.page.http2Requests >= 0)
   })
