@@ -6,7 +6,7 @@ volumes:
 services:
   api:
     build: ./api
-    container_name: httptest_api
+    container_name: api
     tty: true
     environment:
       - NODE_ENV=development
@@ -24,7 +24,7 @@ services:
     command: run watch
   proxy:
     build: ./proxy
-    container_name: httptest_proxy
+    container_name: proxy
     depends_on:
       - api
     volumes:
@@ -34,14 +34,14 @@ services:
       - "443:443"
   cache:
     build: ./cache
-    container_name: httptest_cache
+    container_name: cache
     volumes:
       - cache_data:/data
     ports:
       - "6379:6379" # DEV only!
   chrome:
     build: ./chrome
-    container_name: httptest_chrome
+    container_name: chrome
     shm_size: 256m
     ports:
       - "9222:9222"

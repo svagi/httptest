@@ -6,14 +6,14 @@ volumes:
 services:
   api:
     build: ./api
-    container_name: httptest_api
+    container_name: api
     depends_on:
      - cache
     volumes:
       - api_static:/api/static
   proxy:
     build: ./proxy
-    container_name: httptest_proxy
+    container_name: proxy
     depends_on:
       - api
     volumes:
@@ -23,10 +23,10 @@ services:
       - "443:443"
   cache:
     build: ./cache
-    container_name: httptest_cache
+    container_name: cache
     volumes:
       - cache_data:/data
   chrome:
     build: ./chrome
-    container_name: httptest_chrome
+    container_name: chrome
     shm_size: 256m
