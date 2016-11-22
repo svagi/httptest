@@ -16,6 +16,10 @@ body {
     text-align: right;
 }
 
+.green {
+    color: green;
+}
+
 #root {
     display: flex;
     min-height: 100vh;
@@ -32,8 +36,8 @@ body {
     color: #fff;
 }
 
-#root>header>div, #root>main>div, #root>footer>div {
-    width: 80%;
+#root .wrapper {
+    width: 90%;
     margin: 0 auto;
 }
 
@@ -87,4 +91,10 @@ h3 {
 
 h4 {
     text-align: center;
+}
+
+@media screen and (min-width: 35.5em) {
+    #root .wrapper {
+      width: 80%;
+    }
 }

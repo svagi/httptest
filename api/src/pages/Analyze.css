@@ -1,65 +1,94 @@
-#analyze h2 {
+#analyze>header {
+    text-align: center;
+}
+
+#analyze>header>h2 {
     padding-bottom: .1em;
 }
 
-#analyze h3 {
+#analyze>header>h3 {
     padding-bottom: .4em;
     font-weight: 500;
 }
 
-#analyze h4 {
+#status {
     padding-bottom: .1em;
-    font-weight: 500;
+    font-style: italic;
 }
 
 #analysis {
     padding: 1em 0;
 }
 
-#analysis section {
-    margin: .5em 0;
+#analysis>section {
     border: solid 5px #c9c9c9
 }
 
-#analysis section .rule {
+#analysis>header {
+    font-size: 1.2em;
+    margin: 1em 0 .5em 0;
+}
+
+#analysis .rule {
     border-bottom: 1px solid #c9c9c9;
     word-wrap: break-word;
     padding: .5em;
+    font-weight: 300;
+    line-height: 1.5em;
+    background-color: #f4faff;
 }
 
-#analysis section .rule:last-child {
+#analysis .title {
+    font-weight: 500;
+}
+
+#analysis .rule:last-child {
     border-bottom: none;
 }
 
-#analysis section .rule .info {
+#analysis .info {
     padding: .5em 0;
 }
 
-#analysis section .rule .info div {
-    font-size: .85em;
-}
-
-#analysis section .rule .info .reason {
-    padding-top: 1em;
-}
-
-#analysis section .rule .info ul {
+#analysis ul {
     padding-left: 1.25em;
 }
 
-#analysis section .rule .info .values {
+#analysis .reason {
+    padding-top: .5em;
+}
+
+#analysis .values {
     font-size: .8em
 }
 
-#analysis section .rule header {
-    display: flex;
+#analysis .recommendation {
     cursor: pointer;
 }
 
-#analysis section .rule header .left {
-    width: 70%;
+#score {
+    position: relative;
+    width: 15em;
+    height: 15em;
+    margin: .5em auto;
 }
 
-#analysis section .rule header .right {
-    width: 30%;
+#score-val {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2.5em
+}
+
+@media screen and (min-width: 35.5em) {
+    #analysis .rule header {
+        display: flex;
+    }
+    #analysis .title {
+        width: 100%;
+    }
 }

@@ -109,7 +109,9 @@ export default function (har) {
     obj[key] = fn(data)
     return obj
   }, {})
-  const scores = Object.values(results).map(rule => [rule.weight, rule.score])
+  const scores = Object.values(results)
+    .filter(rule => rule.score !== null)
+    .map(rule => [rule.weight, rule.score])
   const totalScore = Math.round(weightedMean(scores))
   const analysis = {
     page: data.page,

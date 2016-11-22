@@ -18,29 +18,29 @@ export default class Rule extends React.Component {
     const { title, score, description, values = [], reason } = this.props
     const showInfo = this.state.showInfo ? 'block' : 'none'
     return (
-    <div className='rule'>
-      <header onClick={this.handleClick}>
-        <span className='title left'>{title}</span>
-        <span className='score right'>{score === null ? '-' : `${score}/100`}</span>
-      </header>
-      <div className='info' style={{ display: showInfo }}>
-        <div className='description'>
-          {description || 'No description.'}
-        </div>
-        <div className='reason'>
-          {reason}
-        </div>
-        <div className='values'>
-          <ul>
-            {values.map((val, key) => (
-               <li key={key}>
-                 {val}
-               </li>
+      <div className='rule'>
+        <header onClick={this.handleClick}>
+          <div className='title'>{title}</div>
+          <div className='score'>{score === null ? '-' : `${score}/100`}</div>
+        </header>
+        <div className='info' style={{ display: showInfo }}>
+          <div className='description'>
+            {description || 'No description.'}
+          </div>
+          <div className='reason'>
+            {reason}
+          </div>
+          <div className='values'>
+            <ul>
+              {values.map((val, key) => (
+                <li key={key}>
+                  {val}
+                </li>
              ))}
-          </ul>
+            </ul>
+          </div>
         </div>
       </div>
-    </div>
     )
   }
 }

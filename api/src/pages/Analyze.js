@@ -64,12 +64,17 @@ export default class Analyze extends React.Component {
   }
   render (props = this.props) {
     const { url } = props.location.query
-    const { status, data } = this.state
+    const { status, data = {} } = this.state
     return (
       <div id='analyze'>
-        <h2>Performance analysis of</h2>
-        <h3><a href={url} target='_blank'>{url}</a></h3>
-        <h4>Status: {status}</h4>
+        <header>
+          <h2>Performance analysis of</h2>
+          <h3><a href={url} target='_blank' rel='nofollow'>{url}</a></h3>
+          <div id='status'>
+            <span>Status: </span>
+            <span>{status}</span>
+          </div>
+        </header>
         {this.contentSwitch(status, data)}
       </div>
     )

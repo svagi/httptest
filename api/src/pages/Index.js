@@ -24,18 +24,18 @@ export default class Index extends React.Component {
   }
   render () {
     return (
-    <div id='index'>
-      <h2>Analyze your site's performance now</h2>
-      <form onSubmit={this.handleSubmit}>
-        <input
-          ref='url'
-          type='text'
-          name='url'
-          placeholder='Enter URL to analyze...'
-          required/>
-        <input type='submit' value='Analyze' />
-      </form>
-    </div>
+      <div id='index'>
+        <h2>Analyze your site's performance now</h2>
+        <form onSubmit={this.handleSubmit}>
+          <input
+            ref='url'
+            type='text'
+            name='url'
+            placeholder='Enter URL to analyze...'
+            required />
+          <input type='submit' value='Analyze' />
+        </form>
+      </div>
     )
   }
 }
