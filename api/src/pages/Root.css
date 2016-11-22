@@ -43,7 +43,7 @@ body {
 
 #root>main {
     flex: 1;
-    padding-top: 1em;
+    padding: 1em 0;
 }
 
 #root>footer {

@@ -21,13 +21,14 @@ export function reuseTCPconnections ({ page, entries, ...opts }) {
     score -= penalty * (count - limit)
   }
   return rule({
-    title: 'Reuse TCP connections',
-    weight: 8,
-    score: score,
+    count: count,
     description: 'Persistent connections allow multiple HTTP requests use the same TCP connection, thus eliminates TCP handshakes and slow-start latency overhead. Leverage persistent connections whenever possible.',
     reason: `There ${_('is', count)} ${count} immediately terminated ${_('connection', count)}`,
+    score: score,
+    title: 'Reuse TCP connections',
+    type: 'general',
     values: subEntries.map(entry => entry.url.href),
-    count: count
+    weight: 8
   })
 }
 export function cacheAssets ({ page, entries, ...opts }) {
@@ -45,13 +46,14 @@ export function cacheAssets ({ page, entries, ...opts }) {
     score -= penalty * (count - limit)
   }
   return rule({
-    title: 'Cache resources on the client',
-    weight: 8,
-    score: score,
+    count: count,
     description: 'Reduce the load time of your page by storing commonly used files on your visitors browser.',
     reason: `There ${_('is', count)} ${_('resource', count, true)} without expiration time`,
+    score: score,
+    title: 'Cache resources on the client',
+    type: 'general',
     values: values.map(entry => entry.url.href),
-    count: count
+    weight: 8
   })
 }
 export function compressAssets ({ page, entries, ...opts }) {
@@ -69,13 +71,14 @@ export function compressAssets ({ page, entries, ...opts }) {
   const count = values.length
   const score = 100 - (penalty * count)
   return rule({
-    title: 'Compress assets',
-    weight: 7,
-    score: score,
+    count: count,
     description: 'Application resources should be transferred with the minimum number of bytes. Always apply the best compression method for each transferred asset.',
     reason: `There ${_('is', count)} ${_('resource', count, true)} without compression`,
+    score: score,
+    title: 'Compress assets',
+    type: 'general',
     values: values.map(entry => entry.url.href),
-    count: count
+    weight: 7
   })
 }
 
@@ -84,13 +87,14 @@ export function reduceRedirects ({ page, entries, ...opts }) {
   const subEntries = entries.filter((entry) => entry.isRedirect)
   const count = subEntries.length
   return rule({
-    title: 'Minimize number of HTTP redirects',
-    weight: 7,
-    score: 100 - (penalty * count),
+    count: count,
     description: 'HTTP redirects impose high latency overhead. The optimal number of redirects is zero.',
     reason: `There ${_('is', count)} ${_('redirect', count, true)}`,
+    score: 100 - (penalty * count),
+    title: 'Minimize number of HTTP redirects',
+    type: 'general',
     values: subEntries.map((entry) => `(${entry.status}) ${entry.url.href} -> ${entry.redirectUrl || '-'}`),
-    count: count
+    weight: 7
   })
 }
 
@@ -102,12 +106,13 @@ export function reduceDNSlookups ({ page, ...opts }) {
     score -= penalty * (dnsLookups - limit)
   }
   return rule({
-    title: 'Reduce DNS lookups',
-    score: score,
-    weight: 4,
+    count: dnsLookups,
     description: 'Making requests to a large number of different hosts can hurt performance.',
+    score: score,
+    title: 'Reduce DNS lookups',
+    type: 'general',
     values: Object.keys(dns).map(key => `${key} (${dns[key]})`),
-    count: dnsLookups
+    weight: 4
   })
 }
 
@@ -117,13 +122,14 @@ export function eliminateBrokenRequests ({ entries, ...opts }) {
   const count = values.length
   const score = 100 - (count * penalty)
   return rule({
-    title: 'Eliminate requests to non-existent or broken resources.',
-    weight: 2,
-    score: score,
+    count: count,
     description: 'Avoid fetching content that does not exist.',
     reason: `There ${_('is', count)} ${_('resource', count, true)} that not exists`,
+    score: score,
+    title: 'Eliminate requests to non-existent or broken resources.',
+    type: 'general',
     values: values.map(entry => `(${entry.status}) ${entry.url.href}`),
-    count: count
+    weight: 2
   })
 }
 
@@ -145,13 +151,13 @@ export function eliminateDomainSharding ({ page, entries, opts = {} }) {
   const count = sum(values.map(ip => reverseDns[ip].size - limit))
   const score = h2entries.length > 0 ? 100 - (count * penalty) : null
   return rule({
-    title: 'HTTP/2: Elimiminate domain sharding',
-    score: score,
-    weight: 4,
-    description: 'Under HTTP/1 parallelism is limited by number of TCP connections (in practice ~6 connections per origin). However, each of these connections incur unnecessary overhead and compete with each other for bandwidth. Domain sharding should be avoided in HTTP/2.',
-    reason: '',
     count: count,
-    values: values.map(ip => `${ip} -> ${[...reverseDns[ip]].join(', ')}`)
+    description: 'Under HTTP/1 parallelism is limited by number of TCP connections (in practice ~6 connections per origin). However, each of these connections incur unnecessary overhead and compete with each other for bandwidth. Domain sharding should be avoided in HTTP/2.',
+    score: score,
+    title: 'Elimiminate domain sharding',
+    type: 'h2',
+    values: values.map(ip => `${ip} -> ${[...reverseDns[ip]].join(', ')}`),
+    weight: 4
   })
 }
 
@@ -165,13 +171,14 @@ export function useServerPush ({ page, entries, ...opts }) {
   ))
   const count = values.length
   return rule({
-    title: 'HTTP/2: Eliminate roundtrips with Server Push',
-    score: null,
-    weight: 3,
+    count: count,
     description: 'Server push enables the server to send multiple responses (in parallel) for a single client request, thus eliminates entire roundtrips of unnecessary network latency.',
     reason: `There ${_('is', count)} ${_('resource', count, true)} that can be server pushed with HTTP/2`,
+    score: null,
+    title: 'Eliminate roundtrips with Server Push',
+    type: 'h2',
     values: values.map(entry => `${entry.url.href} (${entry.content.size} Bytes)`),
-    count: count
+    weight: 3
   })
 }
 
@@ -183,12 +190,13 @@ export function avoidConcatenating ({ page, entries, ...opts }) {
   })
   const count = values.length
   return rule({
-    title: 'HTTP/2: Avoid resource concatenating',
-    weight: 2,
-    score: page.isHttp2 ? 100 - (penalty * count) : null,
+    count: count,
     description: 'Ship small granular resources and optimize caching policies. Significant wins in compression are the only case where it might be useful.',
     reason: '',
+    score: page.isHttp2 ? 100 - (penalty * count) : null,
+    title: 'Avoid resource concatenating',
+    type: 'h2',
     values: values.map(entry => `${entry.url.href} (${entry.content.size} Bytes)`),
-    count: count
+    weight: 2
   })
 }

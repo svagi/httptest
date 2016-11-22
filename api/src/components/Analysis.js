@@ -2,10 +2,6 @@ import React, { PropTypes } from 'react'
 import { Circle } from 'rc-progress'
 import Rule from './Rule'
 
-function mapRules (rules, fn) {
-  return Object.keys(rules).map((key, idx) => fn(rules[key], key, idx))
-}
-
 export default class Analysis extends React.Component {
   constructor (props) {
     super(props)
@@ -14,6 +10,15 @@ export default class Analysis extends React.Component {
       colorHue: 1.0
     }
     this.tick = this.tick.bind(this)
+    this.rules = {
+      general: this.mapRules(props.rules, 'general'),
+      h2: this.mapRules(props.rules, 'h2')
+    }
+  }
+  mapRules (rules, type) {
+    return Object.keys(rules)
+      .filter(rule => rules[rule].type === type)
+      .map(rule => <Rule key={rule} {...rules[rule]} />)
   }
   componentDidMount () {
     window.requestAnimationFrame(this.tick)
@@ -118,12 +123,10 @@ export default class Analysis extends React.Component {
             </header>
           </div>
         </section>
-        <header>
-        Recommendations
-        </header>
-        <section className='recommendation'>
-          {mapRules(rules, (props, key) => <Rule {...props} key={key} />)}
-        </section>
+        <header>General recommendations</header>
+        <section className='recommendation'>{this.rules.general}</section>
+        <header>HTTP/2 Recommendations</header>
+        <section className='recommendation'>{this.rules.h2}</section>
       </div>
     )
   }
