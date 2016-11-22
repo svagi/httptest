@@ -118,7 +118,7 @@ export function reduceDNSlookups ({ page, ...opts }) {
 
 export function eliminateBrokenRequests ({ entries, ...opts }) {
   const { penalty = 10 } = opts
-  const values = entries.filter((entry) => entry.status >= 400)
+  const values = entries.filter(entry => entry.status >= 400)
   const count = values.length
   const score = 100 - (count * penalty)
   return rule({
@@ -130,6 +130,23 @@ export function eliminateBrokenRequests ({ entries, ...opts }) {
     type: 'general',
     values: values.map(entry => `(${entry.status}) ${entry.url.href}`),
     weight: 2
+  })
+}
+
+export function useHttp2 ({ entries }) {
+  const requests = entries.filter(entry => entry.isValid && !entry.isRedirect)
+  const values = requests.filter(entry => !entry.isHttp2)
+  const count = values.length
+  const score = 100 - Math.round(100 * (count / requests.length))
+  return rule({
+    count: count,
+    description: 'HTTP/2 enables more efficient use of network resources and reduced latency by enabling request and response multiplexing, header compression, prioritization, and more.',
+    reason: `There ${_('is', count)} ${_('resource', count, true)} that are not using HTTP/2 connections`,
+    score: score,
+    title: 'Serve your content using HTTP/2',
+    type: 'h2',
+    values: values.map(entry => entry.url.href),
+    weight: 4
   })
 }
 
@@ -161,6 +178,25 @@ export function eliminateDomainSharding ({ page, entries, opts = {} }) {
   })
 }
 
+export function avoidConcatenating ({ page, entries, ...opts }) {
+  const { maxSize = 70000, penalty = 5 } = opts
+  const values = entries.filter((entry) => {
+    return entry.content.size >= maxSize &&
+    regex.jsOrCss.test(entry.content.mimeType)
+  })
+  const count = values.length
+  return rule({
+    count: count,
+    description: 'Ship small granular resources and optimize caching policies. Significant wins in compression are the only case where it might be useful.',
+    reason: '',
+    score: page.isHttp2 ? 100 - (penalty * count) : null,
+    title: 'Avoid resource concatenating',
+    type: 'h2',
+    values: values.map(entry => `${entry.url.href} (${entry.content.size} Bytes)`),
+    weight: 2
+  })
+}
+
 export function useServerPush ({ page, entries, ...opts }) {
   const { maxSize = 5000 } = opts
   const values = entries.filter(entry => (
@@ -179,24 +215,5 @@ export function useServerPush ({ page, entries, ...opts }) {
     type: 'h2',
     values: values.map(entry => `${entry.url.href} (${entry.content.size} Bytes)`),
     weight: 3
-  })
-}
-
-export function avoidConcatenating ({ page, entries, ...opts }) {
-  const { maxSize = 70000, penalty = 5 } = opts
-  const values = entries.filter((entry) => {
-    return entry.content.size >= maxSize &&
-    regex.jsOrCss.test(entry.content.mimeType)
-  })
-  const count = values.length
-  return rule({
-    count: count,
-    description: 'Ship small granular resources and optimize caching policies. Significant wins in compression are the only case where it might be useful.',
-    reason: '',
-    score: page.isHttp2 ? 100 - (penalty * count) : null,
-    title: 'Avoid resource concatenating',
-    type: 'h2',
-    values: values.map(entry => `${entry.url.href} (${entry.content.size} Bytes)`),
-    weight: 2
   })
 }

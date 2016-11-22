@@ -54,6 +54,14 @@ domains.forEach(domain => datasets[domain].forEach((har, idx) => {
     // console.log(result)
   })
 
+  test(`[${idx}|${domain}] useHttp2`, (t) => {
+    const result = rules.useHttp2(data)
+    t.is(typeof result, 'object')
+    t.true(Array.isArray(result.values))
+    result.values.forEach(val => t.is(typeof val, 'string'))
+    // console.log(result)
+  })
+
   test(`[${idx}|${domain}] eliminateDomainSharding`, (t) => {
     const result = rules.eliminateBrokenRequests(data)
     t.is(typeof result, 'object')
@@ -62,16 +70,16 @@ domains.forEach(domain => datasets[domain].forEach((har, idx) => {
     // console.log(result)
   })
 
-  test(`[${idx}|${domain}] useServerPush`, (t) => {
-    const result = rules.useServerPush(data)
+  test(`[${idx}|${domain}] avoidConcatenating`, (t) => {
+    const result = rules.avoidConcatenating(data)
     t.is(typeof result, 'object')
     t.true(Array.isArray(result.values))
     result.values.forEach(val => t.is(typeof val, 'string'))
     // console.log(result)
   })
 
-  test(`[${idx}|${domain}] avoidConcatenating`, (t) => {
-    const result = rules.avoidConcatenating(data)
+  test(`[${idx}|${domain}] useServerPush`, (t) => {
+    const result = rules.useServerPush(data)
     t.is(typeof result, 'object')
     t.true(Array.isArray(result.values))
     result.values.forEach(val => t.is(typeof val, 'string'))
