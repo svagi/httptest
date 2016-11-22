@@ -83,7 +83,47 @@ test('Unique array values', (t) => {
   t.deepEqual(helpers.uniqArray(['a', 'b', 'a']), ['a', 'b'])
 })
 
-test('Sum array values', (t) => {
+test('First value from an array', (t) => {
+  t.is(helpers.first(), undefined)
+  t.is(helpers.first([]), undefined)
+  t.is(helpers.first([1]), 1)
+  t.is(helpers.first([1, 2]), 1)
+})
+
+test('Addition of two values', (t) => {
+  t.is(helpers.add(0, 1), 1)
+  t.is(helpers.add(1, 2), 3)
+  t.is(helpers.add(-1, 1), 0)
+})
+
+test('Product of two values', (t) => {
+  t.is(helpers.product(0, 1), 0)
+  t.is(helpers.product(1, 2), 2)
+  t.is(helpers.product(-1, 1), -1)
+})
+
+test('Sum from array of values', (t) => {
+  t.is(helpers.sum(), 0)
   t.is(helpers.sum([]), 0)
-  t.is(helpers.sum([1, 2, 2]), 5)
+  t.is(helpers.sum([1, 2]), 3)
+  t.is(helpers.sum([1, null, 2]), 3)
+  t.is(helpers.sum([1, 2, 3]), 6)
+  t.is(helpers.sum([-1, 2, 3]), 4)
+})
+
+test('Product from array of values', (t) => {
+  t.is(helpers.mul(), 1)
+  t.is(helpers.mul([]), 1)
+  t.is(helpers.mul([1, 2]), 2)
+  t.is(helpers.mul([1, null, 2]), 0)
+  t.is(helpers.mul([1, 2, 3]), 6)
+  t.is(helpers.mul([-1, 2, 3]), -6)
+})
+
+test('Weighted arithmetic mean from array of weights and scores', (t) => {
+  t.true(Number.isNaN(helpers.weightedMean()))
+  t.true(Number.isNaN(helpers.weightedMean([])))
+  t.is(helpers.weightedMean([[1, 50]]), 50)
+  t.is(helpers.weightedMean([[1, 0], [4, 100]]), 80)
+  t.is(helpers.weightedMean([[1, 0], [1, 50], [1, 100]]), 50)
 })

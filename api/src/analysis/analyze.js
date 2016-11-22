@@ -1,6 +1,6 @@
 import { parse as parseUrl } from 'url'
 import * as rules from './rules'
-import { convertHeaders, checkRedirect, checkStatus } from './helpers'
+import { convertHeaders, checkRedirect, checkStatus, weightedMean } from './helpers'
 
 export function parseHAR ({ log = {} }) {
   const { pages = [], entries = [] } = log
@@ -104,13 +104,17 @@ export function parseHAR ({ log = {} }) {
 
 export default function (har) {
   const data = parseHAR(har)
-  // Analysis object
+  const results = Object.keys(rules).reduce((obj, key) => {
+    const fn = rules[key]
+    obj[key] = fn(data)
+    return obj
+  }, {})
+  const scores = Object.values(results).map(rule => [rule.weight, rule.score])
+  const totalScore = Math.round(weightedMean(scores))
   const analysis = {
     page: data.page,
-    rules: Object.keys(rules).reduce((obj, rule) => {
-      obj[rule] = rules[rule](data)
-      return obj
-    }, {})
+    rules: results,
+    totalScore: totalScore
   }
   return analysis
 }

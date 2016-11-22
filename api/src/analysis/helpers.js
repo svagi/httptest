@@ -50,7 +50,32 @@ export function uniqArray (arr) {
   return [...new Set(arr)]
 }
 
-// Calculate sum of values from array
-export function sum (array, startValue = 0) {
-  return array.reduce((a, b) => a + b, startValue)
+// Get first value from array
+export function first (array = []) {
+  return array[0]
+}
+
+// Calculate addition of two values
+export function add (a, b) {
+  return a + b
+}
+
+// Calculate sum of multiple values from array
+export function sum (array = []) {
+  return array.reduce(add, 0)
+}
+
+// Calculate product of two values
+export function product (a, b) {
+  return a * b
+}
+
+// Calculate product of multiple values from array
+export function mul (array = []) {
+  return array.reduce(product, 1)
+}
+
+// Calculate weighted arithmetic mean
+export function weightedMean (array = []) {
+  return sum(array.map(mul)) / sum(array.map(first))
 }
