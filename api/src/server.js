@@ -119,6 +119,7 @@ app.get('/events', validUrlMiddleware, sseMiddleware, (req, res) => {
   const events = {
     ANALYSIS_DONE: `analysis-done:${url}`,
     ANALYSIS_START: `analysis-start:${url}`,
+    ANALYSIS_ERROR: `analysis-error:${url}`,
     HAR_DONE: `har-done:${url}`,
     HAR_START: `har-start:${url}`,
     QUEUE_POP: 'queue-pop',
@@ -147,6 +148,10 @@ app.get('/events', validUrlMiddleware, sseMiddleware, (req, res) => {
         return
       case events.ANALYSIS_DONE:
         sse.emit('analysis-done', message)
+        res.end()
+        return
+      case events.ANALYSIS_ERROR:
+        sse.emit('analysis-error')
         res.end()
         return
       case events.QUEUE_PUSH:

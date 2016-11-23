@@ -2,8 +2,8 @@ import { parse as parseUrl } from 'url'
 import * as rules from './rules'
 import { convertHeaders, checkRedirect, checkStatus, weightedMean } from './helpers'
 
-export function parseHAR ({ log = {} }) {
-  const { pages = [], entries = [] } = log
+export function parseHAR ({ log: { pages = [], entries = [] } }) {
+  if (!pages.length || !entries.length) return
   let dns = {}
   let http2Requests = 0
   let isPage = false
@@ -24,7 +24,7 @@ export function parseHAR ({ log = {} }) {
     // Fake spdy -> http/2 Chrome headless bug
     // https://groups.google.com/a/chromium.org/forum/#!topic/headless-dev/lysNMNgqFrI
     const httpVersion = res.httpVersion.replace('spdy', 'http/2')
-    const isHttp2 = /http\/2/i.test(httpVersion)
+    const isHttp2 = /http\/2|h2/i.test(httpVersion)
     const isHtml = /text\/html/i.test(content.mimeType)
     const isRedirect = checkRedirect(status)
     const isValid = checkStatus(status)
@@ -104,6 +104,7 @@ export function parseHAR ({ log = {} }) {
 
 export default function (har) {
   const data = parseHAR(har)
+  if (!data) return
   const results = Object.keys(rules).reduce((obj, key) => {
     const fn = rules[key]
     obj[key] = fn(data)

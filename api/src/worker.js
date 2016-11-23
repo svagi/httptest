@@ -1,5 +1,5 @@
 import capturer from 'chrome-har-capturer'
-// import log from './debug'
+import log from './debug'
 import analyze from './analysis/analyze'
 
 export default function createWorker ({ cache, chromeConfig, interval, ttl }) {
@@ -9,7 +9,11 @@ export default function createWorker ({ cache, chromeConfig, interval, ttl }) {
       if (url === null) {
         return setTimeout(worker.processQueue, interval)
       } else {
-        worker.analyzeUrl(url)
+        try {
+          worker.analyzeUrl(url)
+        } catch (err) {
+          log.error(err)
+        }
         return setImmediate(worker.processQueue)
       }
     },
@@ -24,15 +28,19 @@ export default function createWorker ({ cache, chromeConfig, interval, ttl }) {
           })
           .on('end', function (data) {
             const json = JSON.stringify(data)
-            resolve({ url: url, data: data, json: json })
             cache.publish(`har-done:${url}`, json)
+            resolve({ url: url, data: data, json: json })
           })
       })
       cache.publish(`analysis-start:${url}`, null)
-      const analysis = JSON.stringify(analyze(har.data))
-      cache.publish(`analysis-done:${url}`, analysis)
-      await cache.setex(`analysis:${url}`, ttl, analysis)
-      return analysis
+      const result = analyze(har.data)
+      if (result) {
+        const analysis = JSON.stringify(result)
+        cache.publish(`analysis-done:${url}`, analysis)
+        await cache.setex(`analysis:${url}`, ttl, analysis)
+      } else {
+        cache.publish(`analysis-error:${url}`, null)
+      }
     }
   }
   return worker
