@@ -8,6 +8,7 @@ import etag from 'etag'
 import { renderServerRoute } from './pages/router'
 import log from './debug'
 import createWorker from './worker'
+import { createRankings } from './model'
 
 const app = express()
 const ENV = process.env.NODE_ENV
@@ -17,6 +18,7 @@ const cache = new Redis({
   host: 'cache',
   showFriendlyErrorStack: IS_DEV
 })
+const rankings = createRankings(cache)
 
 function validUrlMiddleware (req, res, next) {
   req.query.url = isWebUri(req.query.url)
@@ -27,10 +29,10 @@ function validUrlMiddleware (req, res, next) {
 }
 
 function sseMiddleware (req, res, next) {
-  if (req.headers.accept !== 'text/event-stream') {
-    return res.status(406).end()
+  if (!req.accepts('text/event-stream')) {
+    return next()
   }
-  const TIMEOUT = 5 * 1000
+  const TIMEOUT = 15 * 1000
   let lastId
   let timer
   req.on('close', function () {
@@ -109,8 +111,10 @@ app.delete('/analysis', validUrlMiddleware, (req, res) => {
     })
 })
 
-// API subscriber
 app.get('/events', validUrlMiddleware, sseMiddleware, (req, res) => {
+  if (!req.accepts('text/event-stream')) {
+    return res.status(406).end()
+  }
   const { url, purge } = req.query
   const useCache = typeof purge === 'undefined'
   // Open SSE connection
@@ -128,12 +132,8 @@ app.get('/events', validUrlMiddleware, sseMiddleware, (req, res) => {
   // Register new redis connection
   const subscriber = cache.duplicate()
   // Quit subscriber if client or server close connection
-  req.on('close', () => {
-    subscriber.quit()
-  })
-  res.on('finish', () => {
-    subscriber.quit()
-  })
+  req.on('close', () => subscriber.quit())
+  res.on('finish', () => subscriber.quit())
   // Listen on events
   subscriber.on('message', (channel, message) => {
     switch (channel) {
@@ -187,31 +187,74 @@ app.get('/events', validUrlMiddleware, sseMiddleware, (req, res) => {
   })
 })
 
-app.get('*', (req, res) => {
-  renderServerRoute({ location: req.originalUrl })
-    .then(({ redirect, html }) => {
-      if (redirect) {
-        res.redirect(302, redirect.pathname + redirect.search)
-      } else {
-        res.writeHead(200, {
-          'Content-Type': 'text/html; charset=utf-8',
-          'Content-Length': Buffer.byteLength(html, 'utf-8'),
-          'Cache-Control': 'no-cache',
-          // Server push hints (supported by cloudflare-nginx)
-          // https://w3c.github.io/preload/
-          'Link': [
-            '</app.bundle.css>; rel=preload; as=style;',
-            '</init.bundle.js>; rel=preload; as=script;'
-          ],
-          'Etag': etag(html)
-        })
-        res.end(html)
+app.get('/rankings', sseMiddleware, async (req, res) => {
+  const accepts = req.accepts(['application/json', 'text/event-stream'])
+  if (!accepts) {
+    return res.status(406).end()
+  }
+  const latest = rankings.getLatest()
+  const best = rankings.getBest()
+  const worst = rankings.getWorst()
+  const { stringify } = JSON
+  if (accepts === 'text/event-stream') {
+    const sse = res.sse
+    sse.open()
+    sse.emit('latest', stringify(await latest))
+    sse.emit('best', stringify(await latest))
+    sse.emit('worst', stringify(await worst))
+    // Register new redis connection
+    const subscriber = cache.duplicate()
+    // Quit subscriber if client or server close connection
+    req.on('close', () => subscriber.quit())
+    res.on('finish', () => subscriber.quit())
+    subscriber.subscribe('queue-next', (err) => {
+      if (err) {
+        log.err(err)
+        sse.emit('error')
+        res.end()
       }
     })
-    .catch((err) => {
-      log.error(err)
-      res.status(500).end()
+    subscriber.on('message', async (channel, message) => {
+      if (channel === 'queue-next') {
+        sse.emit('latest', stringify(await rankings.getLatest()))
+        sse.emit('best', stringify(await rankings.getBest()))
+        sse.emit('worst', stringify(await rankings.getWorst()))
+      }
     })
+  } else {
+    res.writeHead(200, {
+      'Content-Type': 'application/json; charset=utf-8',
+      'X-Accel-Buffering': 'no' // turn off proxy buffering
+    })
+    res.write('{')
+    res.write('\"latest\":' + stringify(await latest) + ',')
+    res.write('\"best\":' + stringify(await best) + ',')
+    res.write('\"worst\":' + stringify(await worst))
+    res.write('}')
+    res.end()
+  }
+})
+
+app.get('*', async (req, res) => {
+  const props = { location: req.originalUrl }
+  const { redirect, html } = await renderServerRoute(props)
+  if (redirect) {
+    res.redirect(302, redirect.pathname + redirect.search)
+  } else {
+    res.writeHead(200, {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Content-Length': Buffer.byteLength(html, 'utf-8'),
+      'Cache-Control': 'no-cache',
+      // Server push hints (supported by cloudflare-nginx)
+      // https://w3c.github.io/preload/
+      'Link': [
+        '</app.bundle.css>; rel=preload; as=style;',
+        '</init.bundle.js>; rel=preload; as=script;'
+      ],
+      'Etag': etag(html)
+    })
+    res.end(html)
+  }
 })
 
 // Start server
@@ -222,6 +265,7 @@ http.createServer(app).listen(PORT, () => {
 // Start worker
 const worker = createWorker({
   cache: cache.duplicate(),
+  rankings: rankings,
   chromeConfig: {
     host: 'chrome',
     port: 9222,

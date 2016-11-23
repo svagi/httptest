@@ -2,7 +2,8 @@ import capturer from 'chrome-har-capturer'
 import log from './debug'
 import analyze from './analysis/analyze'
 
-export default function createWorker ({ cache, chromeConfig, interval, ttl }) {
+export default function createWorker (opts) {
+  const { cache, rankings, chromeConfig, interval, ttl } = opts
   const worker = {
     async processQueue () {
       const url = await cache.rpop('queue')
@@ -33,14 +34,17 @@ export default function createWorker ({ cache, chromeConfig, interval, ttl }) {
           })
       })
       cache.publish(`analysis-start:${url}`, null)
-      const result = analyze(har.data)
-      if (result) {
-        const analysis = JSON.stringify(result)
-        cache.publish(`analysis-done:${url}`, analysis)
-        await cache.setex(`analysis:${url}`, ttl, analysis)
+      const analysis = analyze(har.data)
+      if (analysis) {
+        const json = JSON.stringify(analysis)
+        cache.publish(`analysis-done:${url}`, json)
+        // TODO save the analysis in a different storage (CouchDB?)
+        await cache.setex(`analysis:${url}`, ttl, json)
+        await rankings.save(url, analysis.totalScore)
       } else {
         cache.publish(`analysis-error:${url}`, null)
       }
+      cache.publish(`queue-next`, null)
     }
   }
   return worker
