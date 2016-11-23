@@ -59,7 +59,7 @@ export default class Analyze extends React.Component {
       case STATUS.DONE:
         return <Analysis {...props} />
       default:
-        return ''
+        return <div id='spinner'><div className='spinner' /></div>
     }
   }
   render (props = this.props) {

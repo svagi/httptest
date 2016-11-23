@@ -48,8 +48,11 @@ export default class Analysis extends React.Component {
             trailWidth='10'
             strokeColor={color} />
           <div id='score-val' style={{ color: color }}>
-            <span>{score}</span>
-            <span>/100</span>
+            <div>TOTAL SCORE</div>
+            <div>
+              <span>{score}</span>
+              <span>/100</span>
+            </div>
           </div>
         </div>
         <header>
