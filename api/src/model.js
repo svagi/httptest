@@ -53,16 +53,16 @@ export function createRankings (cache) {
         .zcount(key, 0, 10)
         .exec()
       const keys = [
-        '90-100',
-        '80-90',
-        '70-80',
-        '60-70',
-        '50-60',
-        '40-50',
-        '30-40',
-        '20-30',
-        '10-20',
-        '0-10'
+        '90 – 100',
+        '80 – 90',
+        '70 – 80',
+        '60 – 70',
+        '50 – 60',
+        '40 – 50',
+        '30 – 40',
+        '20 – 30',
+        '10 – 20',
+        '0 – 10'
       ]
       return normalizeZscoreResults(keys, results)
     },

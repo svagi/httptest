@@ -24,10 +24,24 @@
 #analysis .rule {
     border-bottom: 1px solid #c9c9c9;
     word-wrap: break-word;
-    padding: .5em;
     font-weight: 300;
     line-height: 1.5em;
     background-color: #f4faff;
+}
+
+#analysis .rule>header {
+    padding: .5em .25em;
+    cursor: pointer;
+    user-select: none;
+}
+
+#analysis .recommendation .rule>header:before {
+    content: '▶';
+    padding-right: .5em;
+}
+
+#analysis .recommendation .rule>header.active:before {
+    content: '▼';
 }
 
 #analysis .title {
@@ -39,7 +53,7 @@
 }
 
 #analysis .info {
-    padding: .5em 0;
+    padding: .5em .25em;
 }
 
 #analysis ul {
@@ -52,10 +66,6 @@
 
 #analysis .values {
     font-size: .8em
-}
-
-#analysis .recommendation {
-    cursor: pointer;
 }
 
 #score {

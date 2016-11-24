@@ -132,11 +132,11 @@ export default class Analysis extends React.Component {
           </div>
         </section>
         <section className='box recommendation'>
-          <header>General recommendations</header>
+          <header>General best practices</header>
           <div className='content'>{this.rules.general}</div>
         </section>
         <section className='box recommendation'>
-          <header>HTTP/2 Recommendations</header>
+          <header>HTTP/2 best practices</header>
           <div className='content'>{this.rules.h2}</div>
         </section>
       </div>
