@@ -26,7 +26,9 @@ export function createRankings (cache) {
     async getLatest () {
       let pipe = cache.pipeline()
       const urls = await cache.lrange('rankings:latest', 0, 9)
-      urls.forEach(url => pipe = pipe.zscore('rankings:sorted', url))
+      urls.forEach(url => {
+        pipe = pipe.zscore('rankings:sorted', url)
+      })
       const results = await pipe.exec()
       return normalizeZscoreResults(urls, results)
     },

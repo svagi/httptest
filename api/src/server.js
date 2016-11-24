@@ -245,10 +245,10 @@ app.get('/rankings', sseMiddleware, async (req, res) => {
       'X-Accel-Buffering': 'no' // turn off proxy buffering
     })
     res.write('{')
-    res.write('\"latest\":' + stringify(await latest) + ',')
-    res.write('\"best\":' + stringify(await best) + ',')
-    res.write('\"worst\":' + stringify(await worst) + ',')
-    res.write('\"totals\":' + stringify(await totals))
+    res.write('"latest":' + stringify(await latest) + ',')
+    res.write('"best":' + stringify(await best) + ',')
+    res.write('"worst":' + stringify(await worst) + ',')
+    res.write('"totals":' + stringify(await totals))
     res.write('}')
     res.end()
   }
