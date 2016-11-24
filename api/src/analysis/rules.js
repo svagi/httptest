@@ -84,16 +84,24 @@ export function compressAssets ({ page, entries, ...opts }) {
 
 export function reduceRedirects ({ page, entries, ...opts }) {
   const { penalty = 25 } = opts
-  const subEntries = entries.filter((entry) => entry.isRedirect)
-  const count = subEntries.length
+  const values = entries.filter(entry => entry.isRedirect)
+  const internalRedirects = values.filter(entry =>
+      entry.status === 307 &&
+      entry.statusText === 'Internal Redirect' &&
+      entry.resHeaders['non-authoritative-reason']
+  )
+  const count = values.length
+  const subCount = count - internalRedirects.length
   return rule({
     count: count,
     description: 'HTTP redirects impose high latency overhead. The optimal number of redirects is zero.',
-    reason: `There ${_('is', count)} ${_('redirect', count, true)}`,
-    score: 100 - (penalty * count),
+    reason: `There ${_('is', values.length)} ${_('redirect', values.length, true)}`,
+    score: 100 - (penalty * subCount),
     title: 'Minimize number of HTTP redirects',
     type: 'general',
-    values: subEntries.map((entry) => `(${entry.status}) ${entry.url.href} -> ${entry.redirectUrl || '-'}`),
+    values: values.map((entry) =>
+      `(${entry.status} ${entry.statusText || 'Redirect'}) ${entry.url.href} -> ${entry.redirectUrl || '-'}`
+    ),
     weight: 7
   })
 }
@@ -153,10 +161,7 @@ export function useHttp2 ({ entries }) {
 export function eliminateDomainSharding ({ page, entries, opts = {} }) {
   // TODO HTTP/2 connection coalescing
   const { penalty = 25, limit = 1 } = opts
-  const h2entries = entries.filter(entry => (
-    entry.isHttp2 &&
-    entry.status
-  ))
+  const h2entries = entries.filter(entry => entry.isHttp2 && entry.isValid)
   const reverseDns = h2entries
     .reduce((obj, entry) => {
       const domains = obj[entry.ip]
@@ -180,15 +185,17 @@ export function eliminateDomainSharding ({ page, entries, opts = {} }) {
 
 export function avoidConcatenating ({ page, entries, ...opts }) {
   const { maxSize = 70000, penalty = 5 } = opts
-  const values = entries.filter((entry) => {
-    return entry.content.size >= maxSize &&
+  const values = entries.filter(entry =>
+    entry.isHttp2 &&
+    entry.isValid &&
+    entry.content.size >= maxSize &&
     regex.jsOrCss.test(entry.content.mimeType)
-  })
+  )
   const count = values.length
   return rule({
     count: count,
-    description: 'Ship small granular resources and optimize caching policies. Significant wins in compression are the only case where it might be useful.',
-    reason: '',
+    description: 'Ship small granular resources and optimize caching policies. Significant wins in compression are the only cases where it might be useful to benefit from resource concatenating.',
+    reason: `There ${_('is', count)} ${_('resource', count, true)} that should avoid concatenating.`,
     score: page.isHttp2 ? 100 - (penalty * count) : null,
     title: 'Avoid resource concatenating',
     type: 'h2',

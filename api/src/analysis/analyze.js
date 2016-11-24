@@ -56,6 +56,7 @@ export function parseHAR ({ log: { pages = [], entries = [] } }) {
       resHeaders: resHeaders,
       startedDateTime: entry.startedDateTime,
       status: status,
+      statusText: res.statusText,
       time: entry.time,
       timings: entry.timings,
       url: url
