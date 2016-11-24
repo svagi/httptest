@@ -56,7 +56,7 @@ export default class Index extends React.Component {
     return (
       <div id='index'>
         <h2>Analyze your site's performance now</h2>
-        <form onSubmit={this.handleSubmit}>
+        <form action='/analyze' onSubmit={this.handleSubmit}>
           <input
             ref='url'
             type='text'

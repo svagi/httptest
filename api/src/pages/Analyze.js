@@ -33,7 +33,7 @@ export default class Analyze extends React.Component {
       })
     })
     source.addEventListener('subscribe', (e) => {
-      this.setState({ status: STATUS.QUEUING })
+      this.setState({ status: STATUS.QUEUING, url: e.data })
     })
     source.addEventListener('har-start', (e) => {
       this.setState({ status: STATUS.GENERATING })
@@ -50,7 +50,7 @@ export default class Analyze extends React.Component {
       source.close()
     })
     source.addEventListener('error', (e) => {
-      this.setState({ status: STATUS.ERROR })
+      this.setState({ status: STATUS.ERROR, error: e.data })
       source.close()
     })
   }
@@ -62,13 +62,15 @@ export default class Analyze extends React.Component {
     switch (status) {
       case STATUS.DONE:
         return <Analysis {...props} />
+      case STATUS.ERROR:
+        return null
       default:
         return <div id='spinner'><div className='spinner' /></div>
     }
   }
   render (props = this.props) {
-    const { url } = props.location.query
-    const { status, data = {} } = this.state
+    const url = this.state.url || props.location.query.url
+    const { error, status, data = {} } = this.state
     return (
       <div id='analyze'>
         <header>
@@ -76,7 +78,7 @@ export default class Analyze extends React.Component {
           <h3><a href={url} target='_blank' rel='nofollow'>{url}</a></h3>
           <div id='status'>
             <span>Status: </span>
-            <span>{status}</span>
+            <span>{error || status}</span>
           </div>
         </header>
         {this.contentSwitch(status, data)}

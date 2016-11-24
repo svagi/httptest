@@ -15,8 +15,8 @@ function normalizeZrangeResults (results) {
 
 export function createRankings (cache) {
   const rankings = {
-    async save (url, score) {
-      return await cache.pipeline()
+    save (url, score) {
+      return cache.pipeline()
         .lrem('rankings:latest', 1, url)
         .lpush('rankings:latest', url)
         .ltrim('rankings:latest', 0, 9)

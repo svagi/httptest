@@ -1,9 +1,11 @@
 import { isWebUri } from 'valid-url'
+import { parse as parseUrl, format as formatUrl } from 'url'
+import dns from 'dns'
+import etag from 'etag'
 import express from 'express'
 import http from 'http'
 import morgan from 'morgan'
 import Redis from 'ioredis'
-import etag from 'etag'
 
 import { renderServerRoute } from './pages/router'
 import log from './debug'
@@ -43,7 +45,6 @@ function sseMiddleware (req, res, next) {
     log.debug('SSE: Server finish connection')
     timer = clearTimeout(timer)
   })
-  // res.socket.setTimeout(Number.MAX_VALUE) // last as long as possible
   const sse = res.sse = {
     open () {
       lastId = 0
@@ -115,7 +116,12 @@ app.get('/events', validUrlMiddleware, sseMiddleware, (req, res) => {
   if (!req.accepts('text/event-stream')) {
     return res.status(406).end()
   }
-  const { url, purge } = req.query
+  const query = req.query
+  const purge = query.purge
+  const parsedUrl = parseUrl(query.url)
+  parsedUrl.auth = null // remove user name & password
+  const url = formatUrl(parsedUrl)
+  const hostname = parsedUrl.hostname
   const useCache = typeof purge === 'undefined'
   // Open SSE connection
   const sse = res.sse.open()
@@ -162,28 +168,36 @@ app.get('/events', validUrlMiddleware, sseMiddleware, (req, res) => {
         return
     }
   })
-  // Subscribe to all events
-  subscriber.subscribe(Object.values(events), (err) => {
+  // Check if hostname is resolvable
+  dns.lookup(hostname, (err) => {
     if (err) {
-      log.error(err)
-      sse.emit('error')
+      sse.emit('error', `Sorry, hostname (${hostname}) could not be resolved.`)
       return res.end()
-    }
-    sse.emit('subscribe')
-    cache.get(`analysis:${url}`)
-      .then((analysis) => {
-        if (useCache && analysis) {
-          return cache.publish(events.ANALYSIS_DONE, analysis)
-        } else {
-          return cache.lpush('queue', url)
-            .then((count) => cache.publish(events.QUEUE_PUSH, count))
+    } else {
+      // Subscribe to all events
+      subscriber.subscribe(Object.values(events), (err) => {
+        if (err) {
+          log.error(err)
+          sse.emit('error')
+          return res.end()
         }
+        sse.emit('subscribe', url)
+        cache.get(`analysis:${url}`)
+          .then((analysis) => {
+            if (useCache && analysis) {
+              return cache.publish(events.ANALYSIS_DONE, analysis)
+            } else {
+              return cache.lpush('queue', url)
+                .then((count) => cache.publish(events.QUEUE_PUSH, count))
+            }
+          })
+          .catch((err) => {
+            log.error(err)
+            sse.emit('error')
+            res.end()
+          })
       })
-      .catch((err) => {
-        log.error(err)
-        sse.emit('error')
-        res.end()
-      })
+    }
   })
 })
 
