@@ -18,10 +18,10 @@ import Analyze from './Analyze'
 export { history }
 
 export const routes = (
-<Route path='/' component={Root}>
-  <IndexRoute component={Index} />a
-  <Route path='analyze' component={Analyze} />
-</Route>
+  <Route path='/' component={Root}>
+    <IndexRoute component={Index} />a
+    <Route path='analyze' component={Analyze} />
+  </Route>
 )
 
 export function renderClientRoute (props) {
@@ -38,7 +38,6 @@ export function renderServerRoute (props) {
   return new Promise((resolve, reject) => {
     match({ routes, history, ...props }, (err, redirect, routerProps) => {
       if (err) {
-        console.err(err)
         return reject(err)
       }
       if (redirect) {
@@ -47,9 +46,9 @@ export function renderServerRoute (props) {
       return resolve({
         routerProps: routerProps,
         html: '<!DOCTYPE html>' + renderToStaticMarkup(
-            <Html title='httptest.net' {...props}>
+          <Html title='httptest.net' {...props}>
             {renderToString(<RouterContext {...routerProps} />)}
-            </Html>
+          </Html>
         )
       })
     })

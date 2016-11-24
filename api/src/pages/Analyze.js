@@ -54,6 +54,10 @@ export default class Analyze extends React.Component {
       source.close()
     })
   }
+  componentWillUnmount () {
+    this.source.close()
+    this.source = null
+  }
   contentSwitch (status, props) {
     switch (status) {
       case STATUS.DONE:

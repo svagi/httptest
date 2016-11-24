@@ -21,38 +21,6 @@
     margin: 1em;
 }
 
-@keyframes rotate {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-.spinner {
-    display: inline-block;
-    width: 3em;
-    height: 3em;
-    border: 3px solid #1c84ca;
-    border-left-color: transparent;
-    border-radius: 50%;
-    animation: rotate 0.4s infinite linear;
-}
-
-#analysis {
-    padding: 1em 0;
-}
-
-#analysis>section {
-    border: solid 5px #c9c9c9
-}
-
-#analysis>header {
-    font-size: 1.2em;
-    margin: 1em 0 .5em 0;
-}
-
 #analysis .rule {
     border-bottom: 1px solid #c9c9c9;
     word-wrap: break-word;
@@ -94,7 +62,7 @@
     position: relative;
     width: 15em;
     height: 15em;
-    margin: .5em auto;
+    margin: 1.5em auto;
 }
 
 #score-val {

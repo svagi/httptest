@@ -1,26 +1,107 @@
-#index form {
-    display: flex;
+#index>form {
     width: 100%;
 }
+
 #index input {
     padding: 10px;
-    border: solid 5px #ccc;
+    border: solid 5px #aaa;
     transition: border 0.3s;
     font-size: 1em;
+    width: 100%;
+    margin-bottom: 5px;
 }
+
 #index input:focus {
-    border: solid 5px #969696;
+    border: solid 5px #888;
     outline: none;
 }
+
 #index input[type='submit'] {
     color: #4ea2da;
     border: solid 5px #4ea2da;
     background-color: #ffffff;
 }
+
 #index input[type='submit']:hover {
     border: solid 5px #1f8dd6;
 }
+
 #index input[type='text'] {
-    width: 100%;
     margin-right: 5px;
+}
+
+#rankings {
+    margin-top: 1em;
+}
+
+.rankings.box li {
+    display: flex;
+    align-items: center;
+    padding: .25em 0;
+    border-bottom: 1px solid #c9c9c9;
+}
+
+.rankings.box li:last-child {
+    border: none;
+}
+
+.rankings-url {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    font-weight: 300;
+    width: 100%;
+    padding-right: .35em;
+}
+
+.rankings-score {
+    font-size: .8em;
+    text-align: center;
+    width: 2.2em;
+    background-color: #ddd;
+    padding: .3em 0;
+}
+
+.rankings.box li.active .rankings-score {
+    font-weight: 700;
+}
+
+@media screen and (min-width: 35.5em) {
+    #index>form {
+        display: flex;
+    }
+    #index input[type='submit'] {
+        width: auto;
+    }
+    #rankings {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    .rankings.box {
+        width: 50%;
+    }
+    .rankings.box:nth-child(1) {
+        padding-right: .5em;
+    }
+    .rankings.box:nth-child(2) {
+        padding-left: .5em;
+    }
+    .rankings.box:nth-child(3) {
+        padding-right: .5em;
+    }
+    .rankings.box:nth-child(4) {
+        padding-left: .5em;
+    }
+}
+
+@media screen and (min-width: 80em) {
+    .rankings.box {
+        width: 25%;
+    }
+    .rankings.box:nth-child(2) {
+        padding-right: .5em;
+    }
+    .rankings.box:nth-child(3) {
+        padding-left: .5em;
+    }
 }

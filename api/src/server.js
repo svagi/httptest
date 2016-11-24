@@ -195,13 +195,15 @@ app.get('/rankings', sseMiddleware, async (req, res) => {
   const latest = rankings.getLatest()
   const best = rankings.getBest()
   const worst = rankings.getWorst()
+  const totals = rankings.getTotals()
   const { stringify } = JSON
   if (accepts === 'text/event-stream') {
     const sse = res.sse
     sse.open()
     sse.emit('latest', stringify(await latest))
-    sse.emit('best', stringify(await latest))
+    sse.emit('best', stringify(await best))
     sse.emit('worst', stringify(await worst))
+    sse.emit('totals', stringify(await totals))
     // Register new redis connection
     const subscriber = cache.duplicate()
     // Quit subscriber if client or server close connection
@@ -209,7 +211,7 @@ app.get('/rankings', sseMiddleware, async (req, res) => {
     res.on('finish', () => subscriber.quit())
     subscriber.subscribe('queue-next', (err) => {
       if (err) {
-        log.err(err)
+        log.error(err)
         sse.emit('error')
         res.end()
       }
@@ -219,17 +221,20 @@ app.get('/rankings', sseMiddleware, async (req, res) => {
         sse.emit('latest', stringify(await rankings.getLatest()))
         sse.emit('best', stringify(await rankings.getBest()))
         sse.emit('worst', stringify(await rankings.getWorst()))
+        sse.emit('totals', stringify(await rankings.getTotals()))
       }
     })
   } else {
     res.writeHead(200, {
       'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store',
       'X-Accel-Buffering': 'no' // turn off proxy buffering
     })
     res.write('{')
     res.write('\"latest\":' + stringify(await latest) + ',')
     res.write('\"best\":' + stringify(await best) + ',')
-    res.write('\"worst\":' + stringify(await worst))
+    res.write('\"worst\":' + stringify(await worst) + ',')
+    res.write('\"totals\":' + stringify(await totals))
     res.write('}')
     res.end()
   }
@@ -237,7 +242,10 @@ app.get('/rankings', sseMiddleware, async (req, res) => {
 
 app.get('*', async (req, res) => {
   const props = { location: req.originalUrl }
-  const { redirect, html } = await renderServerRoute(props)
+  const { redirect, html } = await renderServerRoute(props).catch(err => {
+    log.error(err)
+    res.status(500).end()
+  })
   if (redirect) {
     res.redirect(302, redirect.pathname + redirect.search)
   } else {
@@ -272,6 +280,6 @@ const worker = createWorker({
     fetchContent: true
   },
   interval: 500,
-  ttl: 3600 // 1 hour
+  ttl: 60 * 60 * 24 * 7 // 1 week
 })
 worker.processQueue()

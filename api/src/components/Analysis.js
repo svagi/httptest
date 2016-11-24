@@ -21,7 +21,10 @@ export default class Analysis extends React.Component {
       .map(rule => <Rule key={rule} {...rules[rule]} />)
   }
   componentDidMount () {
-    window.requestAnimationFrame(this.tick)
+    this.raf = window.requestAnimationFrame(this.tick)
+  }
+  componentWillUnmount () {
+    window.cancelAnimationFrame(this.raf)
   }
   shouldComponentUpdate (nextProps, nextState) {
     return this.state.score !== nextState.score
@@ -29,7 +32,7 @@ export default class Analysis extends React.Component {
   tick () {
     const { score } = this.state
     if (score < this.props.totalScore) {
-      window.requestAnimationFrame(this.tick)
+      this.raf = window.requestAnimationFrame(this.tick)
       this.setState({
         score: score + 1,
         colorHue: 120 * (score / 100)
@@ -41,7 +44,7 @@ export default class Analysis extends React.Component {
     const color = `hsl(${colorHue}, 50%, 50%)`
     return (
       <div id='analysis'>
-        <div id='score'>
+        <section id='score'>
           <Circle
             percent={score}
             strokeWidth='10'
@@ -54,82 +57,88 @@ export default class Analysis extends React.Component {
               <span>/100</span>
             </div>
           </div>
-        </div>
-        <header>
-        Page overview
-        </header>
-        <section>
-          <div className='rule'>
-            <header>
-              <div className='title'>Protocol</div>
-              <div className='score'>{page.protocol}</div>
-            </header>
-          </div>
-          <div className='rule'>
-            <header>
-              <div className='title'>Requests</div>
-              <div className='score'>
-                <span title='Total number of requests'>{page.totalRequests}</span>
-              </div>
-            </header>
-          </div>
-          <div className='rule'>
-            <header>
-              <div className='title'>HTTP/2 Requests</div>
-              <div className='score'>
-                <span title='Total number of HTTP/2 requests'>{page.http2Requests}</span>
-              </div>
-            </header>
-          </div>
-          <div className='rule'>
-            <header>
-              <div className='title'>DNS lookups</div>
-              <div className='score'>{page.dnsLookups}</div>
-            </header>
-          </div>
-          <div className='rule'>
-            <header>
-              <div className='title'>Time to first Byte (TTFB)</div>
-              <div className='score'>
-                {page.timeToFirstByte
+        </section>
+        <section className='box overview'>
+          <header>
+          Page overview
+          </header>
+          <div className='content'>
+            <div className='rule'>
+              <header>
+                <div className='title'>Protocol</div>
+                <div className='score'>{page.protocol}</div>
+              </header>
+            </div>
+            <div className='rule'>
+              <header>
+                <div className='title'>Requests</div>
+                <div className='score'>
+                  <span title='Total number of requests'>{page.totalRequests}</span>
+                </div>
+              </header>
+            </div>
+            <div className='rule'>
+              <header>
+                <div className='title'>HTTP/2 Requests</div>
+                <div className='score'>
+                  <span title='Total number of HTTP/2 requests'>{page.http2Requests}</span>
+                </div>
+              </header>
+            </div>
+            <div className='rule'>
+              <header>
+                <div className='title'>DNS lookups</div>
+                <div className='score'>{page.dnsLookups}</div>
+              </header>
+            </div>
+            <div className='rule'>
+              <header>
+                <div className='title'>Time to first Byte (TTFB)</div>
+                <div className='score'>
+                  {page.timeToFirstByte
                   ? <span>{(page.timeToFirstByte / 1000).toFixed(3)}s</span>
                   : '-'}
-              </div>
-            </header>
-          </div>
-          <div className='rule'>
-            <header>
-              <div className='title'>DOM load time</div>
-              <div className='score'>
-                {page.domLoadTime
+                </div>
+              </header>
+            </div>
+            <div className='rule'>
+              <header>
+                <div className='title'>DOM load time</div>
+                <div className='score'>
+                  {page.domLoadTime
                   ? <span>{(page.domLoadTime / 1000).toFixed(3)}s</span>
                   : '-'
                 }
-              </div>
-            </header>
-          </div>
-          <div className='rule'>
-            <header>
-              <div className='title'>Load time</div>
-              <div className='score'>
-                {page.loadTime
+                </div>
+              </header>
+            </div>
+            <div className='rule'>
+              <header>
+                <div className='title'>Load time</div>
+                <div className='score'>
+                  {page.loadTime
                   ? <span>{(page.loadTime / 1000).toFixed(3)}s</span>
                   : '-'
                 }
-              </div>
-            </header>
-          </div>
-          <div className='rule'>
-            <header>
-              <div className='title'>Total page size</div>
-              <div className='score'>{page.totalBytes / 1000}kB</div>
-            </header>
+                </div>
+              </header>
+            </div>
+            <div className='rule'>
+              <header>
+                <div className='title'>Total page size</div>
+                <div className='score'>{page.totalBytes / 1000}kB</div>
+              </header>
+            </div>
           </div>
         </section>
-        <header>General recommendations</header>
-        <section className='recommendation'>{this.rules.general}</section>
-        <header>HTTP/2 Recommendations</header>
-        <section className='recommendation'>{this.rules.h2}</section>
+        <section className='box recommendation'>
+          <header>General recommendations</header>
+          <div className='content'>{this.rules.general}</div>
+        </section>
+        <section className='box recommendation'>
+          <header>HTTP/2 Recommendations</header>
+          <div className='content'>{this.rules.h2}</div>
+        </section>
       </div>
     )
   }

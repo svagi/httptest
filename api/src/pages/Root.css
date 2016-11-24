@@ -71,6 +71,25 @@ body {
     color: #fff;
 }
 
+.box {
+    margin-bottom: 1em;
+}
+
+.box>header {
+    background-color: #f0f8ff;
+    font-size: 1.2em;
+    padding: .75em .5em;
+    background-color: #3999d8;
+    color: #fff;
+}
+
+.box>.content {
+    padding: .25em .5em;
+    background-color: #f0f8ff;
+    border: 5px solid #3999d8;
+    border-top: none;
+}
+
 h1 {
     display: inline-block;
     padding: .5em 0;
@@ -80,7 +99,7 @@ h1 {
 h2 {
     text-align: center;
     color: #1c84ca;
-    font-size: 2em;
+    font-size: 1.5em;
     padding-bottom: .5em;
 }
 
@@ -95,6 +114,28 @@ h4 {
 
 @media screen and (min-width: 35.5em) {
     #root .wrapper {
-      width: 80%;
+        width: 80%;
     }
+    h2 {
+        font-size: 2em;
+    }
+}
+
+@keyframes rotate {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.spinner {
+    display: inline-block;
+    width: 3em;
+    height: 3em;
+    border: 3px solid #1c84ca;
+    border-left-color: transparent;
+    border-radius: 50%;
+    animation: rotate 0.4s infinite linear;
 }
