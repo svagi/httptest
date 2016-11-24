@@ -7,10 +7,11 @@ import http from 'http'
 import morgan from 'morgan'
 import Redis from 'ioredis'
 
-import { renderServerRoute } from './pages/router'
-import log from './debug'
-import createWorker from './worker'
 import { createRankings } from './model'
+import { renderServerRoute } from './pages/router'
+import createWorker from './worker'
+import log from './debug'
+import pkg from '../package.json'
 
 const app = express()
 const ENV = process.env.NODE_ENV
@@ -292,6 +293,7 @@ const worker = createWorker({
   chromeConfig: {
     host: 'chrome',
     port: 9222,
+    userAgent: `Mozilla/5.0 (compatible; ${pkg.name}/${pkg.version}; +${pkg.homepage}) HeadlessChrome`,
     fetchContent: true,
     onLoadDelay: 500,
     giveUpTime: 90 // sec
