@@ -8,18 +8,15 @@ function rule (props) {
   return props
 }
 
-export function reuseTCPconnections ({ page, entries, ...opts }) {
-  const { penalty = 5, limit = 1 } = opts
-  const subEntries = entries.filter(entry =>
-    entry.isValid &&
-    !entry.isRedirect &&
+export function reuseTCPconnections ({ page, entries }) {
+  const validReqs = entries.filter(entry =>
+    entry.isValid && !entry.isRedirect
+  )
+  const values = validReqs.filter(entry =>
     !(entry.resHeaders.connection !== 'close')
   )
-  const count = subEntries.length
-  let score = 100
-  if (count > limit) {
-    score -= penalty * (count - limit)
-  }
+  const count = values.length
+  const score = 100 - Math.round(100 * (count / validReqs.length))
   return rule({
     count: count,
     description: 'Persistent connections allow multiple HTTP requests use the same TCP connection, thus eliminates TCP handshakes and slow-start latency overhead. Leverage persistent connections whenever possible.',
@@ -27,55 +24,52 @@ export function reuseTCPconnections ({ page, entries, ...opts }) {
     score: score,
     title: 'Reuse TCP connections',
     type: 'general',
-    values: subEntries.map(entry => entry.url.href),
-    weight: 8
-  })
-}
-export function cacheAssets ({ page, entries, ...opts }) {
-  const { limit = 1, penalty = 5 } = opts
-  const values = entries.filter((entry) => {
-    const headers = entry.resHeaders
-    return !entry.isRedirect &&
-      entry.isValid &&
-      !entry.isRedirect &&
-      (!headers['cache-control'] || !headers['expires'])
-  })
-  const count = values.length
-  let score = 100
-  if (count > limit) {
-    score -= penalty * (count - limit)
-  }
-  return rule({
-    count: count,
-    description: 'Reduce the load time of your page by storing commonly used files on your visitors browser.',
-    reason: `There ${_('is', count)} ${_('resource', count, true)} without expiration time`,
-    score: score,
-    title: 'Cache resources on the client',
-    type: 'general',
     values: values.map(entry => entry.url.href),
     weight: 8
   })
 }
+export function cacheAssets ({ page, entries }) {
+  const validReqs = entries.filter(entry =>
+    entry.isValid && !entry.isRedirect
+  )
+  const values = validReqs.filter(({ isValid, isRedirect, resHeaders }) => (
+    !resHeaders['cache-control'] || !resHeaders['expires']
+  ))
+  const count = values.length
+  const score = 100 - Math.round(100 * (count / validReqs.length))
+  return rule({
+    count: count,
+    description: 'Reduce the load time of your page by storing commonly used files on your visitors browser.',
+    reason: `There ${_('is', count)} ${_('resource', count, true)} without cache expiration time`,
+    score: score,
+    title: 'Cache resources on the client',
+    type: 'general',
+    values: values.map(val => val.url.href),
+    weight: 8
+  })
+}
+
 export function compressAssets ({ page, entries, ...opts }) {
-  const { minSize = 256, penalty = 5 } = opts
-  const values = entries.filter((entry) => {
+  const { minSize = 256 } = opts
+  const validReqs = entries.filter(entry =>
+    entry.isValid && !entry.isRedirect
+  )
+  const values = validReqs.filter((entry) => {
     const headers = entry.resHeaders
     return (
-      entry.isValid &&
-      !entry.isRedirect &&
       entry.content.size >= minSize &&
       regex.text.test(entry.content.mimeType) &&
       !regex.encoding.test(headers['content-encoding'])
     )
   })
   const count = values.length
-  const score = 100 - (penalty * count)
+  const score = 100 - Math.round(100 * (count / validReqs.length))
   return rule({
     count: count,
     description: 'Application resources should be transferred with the minimum number of bytes. Always apply the best compression method for each transferred asset.',
     reason: `There ${_('is', count)} ${_('resource', count, true)} without compression`,
     score: score,
-    title: 'Compress assets',
+    title: 'Compress resources during transfer',
     type: 'general',
     values: values.map(entry => entry.url.href),
     weight: 7
@@ -134,7 +128,7 @@ export function eliminateBrokenRequests ({ entries, ...opts }) {
     description: 'Avoid fetching content that does not exist.',
     reason: `There ${_('is', count)} ${_('resource', count, true)} that not exists`,
     score: score,
-    title: 'Eliminate requests to non-existent or broken resources.',
+    title: 'Eliminate requests to non-existent or broken resources',
     type: 'general',
     values: values.map(entry => `(${entry.status}) ${entry.url.href}`),
     weight: 2
@@ -142,10 +136,10 @@ export function eliminateBrokenRequests ({ entries, ...opts }) {
 }
 
 export function useHttp2 ({ entries }) {
-  const requests = entries.filter(entry => entry.isValid && !entry.isRedirect)
-  const values = requests.filter(entry => !entry.isHttp2)
+  const validReqs = entries.filter(entry => entry.isValid && !entry.isRedirect)
+  const values = validReqs.filter(entry => !entry.isHttp2)
   const count = values.length
-  const score = 100 - Math.round(100 * (count / requests.length))
+  const score = 100 - Math.round(100 * (count / validReqs.length))
   return rule({
     count: count,
     description: 'HTTP/2 enables more efficient use of network resources and reduced latency by enabling request and response multiplexing, header compression, prioritization, and more.',
