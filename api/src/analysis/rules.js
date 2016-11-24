@@ -159,7 +159,7 @@ export function useHttp2 ({ entries }) {
 }
 
 export function eliminateDomainSharding ({ page, entries, opts = {} }) {
-  const { penalty = 25, limit = 1 } = opts
+  const { penalty = 20, limit = 1 } = opts
   const h2entries = entries.filter(entry =>
     entry.isHttp2 &&
     entry.isValid &&
