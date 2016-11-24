@@ -1,10 +1,10 @@
 {
     "name": "httptest",
-    "version": "0.0.0",
+    "version": "1.0.0-rc0",
     "description": "",
     "author": "Jan Svager <jan@svager.cz>",
     "license": "MIT",
-    "homepage": "https://github.com/svagi/httptest#readme",
+    "homepage": "https://www.httptest.net",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/svagi/httptest.git"
@@ -12,7 +12,12 @@
     "bugs": {
         "url": "https://github.com/svagi/httptest/issues"
     },
-    "keywords": ["http", "http/2", "HAR", "performance"],
+    "keywords": [
+        "http",
+        "http/2",
+        "HAR",
+        "performance"
+    ],
     "main": "src/server.js",
     "scripts": {
         "babel:build": "BABEL_ENV=node babel src -d build",
@@ -26,9 +31,13 @@
         "test": "BABEL_ENV=node ava"
     },
     "ava": {
-        "files": ["src/**/*.test.js"],
+        "files": [
+            "src/**/*.test.js"
+        ],
         "babel": "inherit",
-        "require": ["babel-register"],
+        "require": [
+            "babel-register"
+        ],
         "verbose": true
     },
     "standard": {
