@@ -44,6 +44,7 @@ export function parseHAR ({ log: { pages = [], entries = [] } }) {
     const newEntry = {
       bodySize: res.bodySize,
       content: content,
+      connection: entry.connection,
       hostname: hostname,
       httpVersion: httpVersion,
       ip: ip,

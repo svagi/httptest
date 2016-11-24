@@ -291,7 +291,8 @@ const worker = createWorker({
   chromeConfig: {
     host: 'chrome',
     port: 9222,
-    fetchContent: true
+    fetchContent: true,
+    onLoadDelay: 500
   },
   interval: 500,
   ttl: 60 * 60 * 24 * 7 // 1 week

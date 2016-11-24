@@ -1,5 +1,5 @@
 import _ from 'pluralize'
-import { normalizeScore, normalizeReason, sum, regex } from './helpers'
+import { normalizeScore, normalizeReason, regex } from './helpers'
 
 // Main rule wrapper with properties normalization
 function rule (props) {
@@ -159,18 +159,20 @@ export function useHttp2 ({ entries }) {
 }
 
 export function eliminateDomainSharding ({ page, entries, opts = {} }) {
-  // TODO HTTP/2 connection coalescing
   const { penalty = 25, limit = 1 } = opts
-  const h2entries = entries.filter(entry => entry.isHttp2 && entry.isValid)
+  const h2entries = entries.filter(entry =>
+    entry.isHttp2 &&
+    entry.isValid &&
+    !entry.isRedirect
+  )
   const reverseDns = h2entries
     .reduce((obj, entry) => {
       const domains = obj[entry.ip]
       obj[entry.ip] = domains ? domains.add(entry.hostname) : new Set()
       return obj
     }, {})
-  const reverseDnsKeys = Object.keys(reverseDns)
-  const values = reverseDnsKeys.filter(ip => reverseDns[ip].size >= 2)
-  const count = sum(values.map(ip => reverseDns[ip].size - limit))
+  const values = Object.keys(reverseDns)
+  const count = values.length - limit
   const score = h2entries.length > 0 ? 100 - (count * penalty) : null
   return rule({
     count: count,
