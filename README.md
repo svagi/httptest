@@ -16,7 +16,7 @@ docker-compose up
 
 ### Test
 ```
-docker-compose run --rm api npm test
+docker-compose run --rm api test
 ```
 
 ## More
