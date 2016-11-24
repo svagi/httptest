@@ -288,11 +288,13 @@ http.createServer(app).listen(PORT, () => {
 const worker = createWorker({
   cache: cache.duplicate(),
   rankings: rankings,
+  verbose: IS_DEV,
   chromeConfig: {
     host: 'chrome',
     port: 9222,
     fetchContent: true,
-    onLoadDelay: 500
+    onLoadDelay: 500,
+    giveUpTime: 90 // sec
   },
   interval: 500,
   ttl: 60 * 60 * 24 * 7 // 1 week
