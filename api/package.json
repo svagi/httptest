@@ -20,6 +20,7 @@
         "webpack:build": "BABEL_ENV=webpack webpack --colors",
         "webpack:watch": "npm run webpack:build -- --watch",
         "build": "npm run babel:build && npm run webpack:build",
+        "lint": "standard src/*",
         "start": "npm run build && node build/server.js",
         "watch": "npm run nodemon:watch & npm run webpack:watch",
         "test": "BABEL_ENV=node ava"
@@ -65,6 +66,7 @@
         "ava": "*",
         "babel-register": "*",
         "babel-eslint": "*",
-        "nodemon": "*"
+        "nodemon": "*",
+        "standard": "*"
     }
 }
