@@ -166,9 +166,9 @@ export function eliminateDomainSharding ({ page, entries, opts = {} }) {
     !entry.isRedirect
   )
   const reverseDns = h2entries
-    .reduce((obj, entry) => {
-      const domains = obj[entry.ip]
-      obj[entry.ip] = domains ? domains.add(entry.hostname) : new Set()
+    .reduce((obj, { hostname, ip }) => {
+      const domains = obj[ip]
+      obj[ip] = domains ? domains.add(hostname) : new Set([hostname])
       return obj
     }, {})
   const values = Object.keys(reverseDns)

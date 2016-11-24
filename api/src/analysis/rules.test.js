@@ -63,7 +63,7 @@ domains.forEach(domain => datasets[domain].forEach((har, idx) => {
   })
 
   test(`[${idx}|${domain}] eliminateDomainSharding`, (t) => {
-    const result = rules.eliminateBrokenRequests(data)
+    const result = rules.eliminateDomainSharding(data)
     t.is(typeof result, 'object')
     t.true(Array.isArray(result.values))
     result.values.forEach(val => t.is(typeof val, 'string'))
