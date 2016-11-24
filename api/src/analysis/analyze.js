@@ -25,7 +25,6 @@ export function parseHAR ({ log: { pages = [], entries = [] } }) {
     // https://groups.google.com/a/chromium.org/forum/#!topic/headless-dev/lysNMNgqFrI
     const httpVersion = res.httpVersion.replace('spdy', 'http/2')
     const isHttp2 = /http\/2|h2/i.test(httpVersion)
-    const isHtml = /text\/html/i.test(content.mimeType)
     const isRedirect = checkRedirect(status)
     const isValid = checkStatus(status)
     // Capture all domains
@@ -62,7 +61,7 @@ export function parseHAR ({ log: { pages = [], entries = [] } }) {
       url: url
     }
     // Set page entry
-    if (isHtml && !isRedirect && !isPage) {
+    if (!isRedirect && !isPage) {
       page = {
         ...newEntry,
         pageTimings: { ...page.pageTimings, onFirstByte: entry.timings.wait }
