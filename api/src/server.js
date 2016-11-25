@@ -16,7 +16,7 @@ import pkg from '../package.json'
 const app = express()
 const ENV = process.env.NODE_ENV
 const PORT = process.env.NODE_PORT
-const IS_DEV = ENV !== 'development'
+const IS_DEV = ENV === 'development'
 const cache = new Redis({
   host: 'cache',
   showFriendlyErrorStack: IS_DEV
@@ -80,6 +80,11 @@ app.disable('x-powered-by')
 
 // An identical strong ETag guarantees the response is byte-for-byte the same
 app.set('etag', 'strong')
+
+// Serve static files in development
+if (IS_DEV) {
+  app.use(express.static('/api/static'))
+}
 
 // Setup custom morgan format
 app.use(morgan('[:date[iso]] :method :url :status HTTP/:http-version :response-time ms'))
