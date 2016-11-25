@@ -7,14 +7,16 @@ export default function createWorker (opts) {
   const worker = {
     async processQueue () {
       const url = await cache.rpop('queue')
+      cache.publish(`queue-pop:${url}`, null)
       if (url === null) {
         return setTimeout(worker.processQueue, interval)
       } else {
         try {
-          worker.analyzeUrl(url)
+          await worker.analyzeUrl(url)
         } catch (err) {
           log.error(err)
         }
+        cache.publish(`queue-next`, null)
         return setImmediate(worker.processQueue)
       }
     },
@@ -24,7 +26,6 @@ export default function createWorker (opts) {
         cache.publish(`analysis-error:${url}`, null)
       }
       // Start loading URL in chrome
-      cache.publish(`queue-pop:${url}`, null)
       const har = await new Promise((resolve) => {
         capturer.setVerbose(verbose)
         capturer.load([url], chromeConfig)
@@ -50,7 +51,6 @@ export default function createWorker (opts) {
       } else {
         cache.publish(`analysis-error:${url}`, null)
       }
-      cache.publish(`queue-next`, null)
     }
   }
   return worker
