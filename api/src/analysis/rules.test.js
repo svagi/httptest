@@ -22,6 +22,14 @@ domains.forEach(domain => datasets[domain].forEach((har, idx) => {
     // console.log(result)
   })
 
+  test(`[${idx}|${domain}] useCacheValidators`, (t) => {
+    const result = rules.useCacheValidators(data)
+    t.is(typeof result, 'object')
+    t.true(Array.isArray(result.values))
+    result.values.forEach(val => t.is(typeof val, 'string'))
+    // console.log(result)
+  })
+
   test(`[${idx}|${domain}] compressAssets`, (t) => {
     const result = rules.compressAssets(data)
     t.is(typeof result, 'object')

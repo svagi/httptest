@@ -32,9 +32,9 @@ export function cacheAssets ({ page, entries }) {
   const validReqs = entries.filter(entry =>
     entry.isValid && !entry.isRedirect
   )
-  const values = validReqs.filter(({ isValid, isRedirect, resHeaders }) => (
+  const values = validReqs.filter(({ isValid, isRedirect, resHeaders }) =>
     !resHeaders['cache-control'] || !resHeaders['expires']
-  ))
+  )
   const count = values.length
   const score = 100 - Math.round(100 * (count / validReqs.length))
   return rule({
@@ -46,6 +46,27 @@ export function cacheAssets ({ page, entries }) {
     type: 'general',
     values: values.map(val => val.url.href),
     weight: 8
+  })
+}
+
+export function useCacheValidators ({ page, entries }) {
+  const validReqs = entries.filter(entry =>
+    entry.isValid && !entry.isRedirect
+  )
+  const values = validReqs.filter(({ resHeaders }) =>
+    !(resHeaders['last-modified'] || resHeaders['etag'])
+  )
+  const count = values.length
+  const score = 100 - Math.round(100 * (count / validReqs.length))
+  return rule({
+    count: count,
+    description: 'Specify the Last-Modified or Etag header to allow the client to check if the expired resource has been updated, if not data transfer can be omitted.',
+    reason: `There ${_('is', count)} ${_('resource', count, true)} without Last-Modified or Etag header`,
+    score: score,
+    title: 'Specify cache validation mechanisms',
+    type: 'general',
+    values: values.map(val => val.url.href),
+    weight: 5
   })
 }
 
@@ -145,7 +166,7 @@ export function useHttp2 ({ entries }) {
     description: 'HTTP/2 enables more efficient use of network resources and reduced latency by enabling request and response multiplexing, header compression, prioritization, and more.',
     reason: `There ${_('is', count)} ${_('resource', count, true)} that are not using HTTP/2 connections`,
     score: score,
-    title: 'Serve your content using HTTP/2',
+    title: 'Serve all resources using HTTP/2',
     type: 'h2',
     values: values.map(entry => entry.url.href),
     weight: 4
