@@ -41,7 +41,7 @@ export function renderServerRoute (opts) {
   return new Promise(resolve => {
     match(props, async (err, redirect, routerProps) => {
       if (err) {
-        return resolve(err)
+        return resolve({ error: err })
       }
       if (redirect) {
         return resolve({ redirect: redirect, status: 302 })
@@ -50,13 +50,19 @@ export function renderServerRoute (opts) {
         const result = await renderServerRoute({ ...props, location: '/404' })
         return resolve({ ...result, status: 404 })
       }
-      return resolve({
-        status: 200,
-        html: '<!DOCTYPE html>' + renderToStaticMarkup(
+      let html
+      try {
+        html = renderToStaticMarkup(
           <Html title='httptest.net' {...props}>
             {renderToString(<RouterContext {...routerProps} />)}
           </Html>
         )
+      } catch (err) {
+        return resolve({ error: err })
+      }
+      return resolve({
+        status: 200,
+        html: '<!DOCTYPE html>' + html
       })
     })
   })

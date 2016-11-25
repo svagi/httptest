@@ -16,6 +16,10 @@
     outline: none;
 }
 
+#index input.invalid {
+    border: solid 5px #f34e4e;
+}
+
 #index input[type='submit'] {
     color: #4ea2da;
     border: solid 5px #4ea2da;

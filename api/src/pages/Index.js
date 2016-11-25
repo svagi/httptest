@@ -2,11 +2,11 @@ import React from 'react'
 import { Link } from 'react-router'
 import { history } from './router'
 import RankingBox from '../components/RankingBox'
+import UrlForm from '../components/UrlForm'
 
 export default class Index extends React.Component {
   constructor (props) {
     super(props)
-    this.handleSubmit = this.handleSubmit.bind(this)
     this.state = {}
   }
   componentDidMount () {
@@ -36,17 +36,6 @@ export default class Index extends React.Component {
     this.source.close()
     this.source = null
   }
-  handleSubmit (e) {
-    let url = this.refs.url.value
-    if (!/^https?:\/\//i.test(url)) {
-      url = 'http://' + url
-    }
-    e.preventDefault()
-    history.push({
-      pathname: '/analyze/',
-      search: `?url=${url}`
-    })
-  }
   render () {
     const { latest, best, worst, totals } = this.state
     const mapUrl = (url) =>
@@ -56,15 +45,10 @@ export default class Index extends React.Component {
     return (
       <div id='index'>
         <h2>Analyze your site's performance now</h2>
-        <form action='/analyze' onSubmit={this.handleSubmit}>
-          <input
-            ref='url'
-            type='text'
-            name='url'
-            placeholder='Enter URL to analyze...'
-            required />
-          <input type='submit' value='Analyze' />
-        </form>
+        <UrlForm onSubmit={url => history.push({
+          pathname: '/analyze/',
+          search: `?url=${url}`
+        })} />
         <section id='rankings'>
           <RankingBox
             title='Recent analysis'
