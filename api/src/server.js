@@ -262,27 +262,27 @@ app.get('/rankings', sseMiddleware, async (req, res) => {
 
 app.get('*', async (req, res) => {
   const props = { location: req.originalUrl }
-  const { redirect, html } = await renderServerRoute(props).catch(err => {
-    log.error(err)
-    res.status(500).end()
-  })
-  if (redirect) {
-    res.redirect(302, redirect.pathname + redirect.search)
-  } else {
-    res.writeHead(200, {
-      'Content-Type': 'text/html; charset=utf-8',
-      'Content-Length': Buffer.byteLength(html, 'utf-8'),
-      'Cache-Control': 'no-cache',
-      // Server push hints (supported by cloudflare-nginx)
-      // https://w3c.github.io/preload/
-      'Link': [
-        '</app.bundle.css>; rel=preload; as=style;',
-        '</init.bundle.js>; rel=preload; as=script;'
-      ],
-      'Etag': etag(html)
-    })
-    res.end(html)
+  const { error, redirect, html, status } = await renderServerRoute(props)
+  if (error) {
+    log.error(error)
+    return res.status(500).end()
   }
+  if (redirect) {
+    return res.redirect(status, redirect.pathname + redirect.search)
+  }
+  res.writeHead(status, {
+    'Content-Type': 'text/html; charset=utf-8',
+    'Content-Length': Buffer.byteLength(html, 'utf-8'),
+    'Cache-Control': 'no-cache',
+    // Server push hints (supported by cloudflare-nginx)
+    // https://w3c.github.io/preload/
+    'Link': [
+      '</app.bundle.css>; rel=preload; as=style;',
+      '</init.bundle.js>; rel=preload; as=script;'
+    ],
+    'Etag': etag(html)
+  })
+  res.end(html)
 })
 
 // Start server

@@ -13,6 +13,7 @@ import Html from './Html'
 import Root from './Root'
 import Index from './Index'
 import Analyze from './Analyze'
+import NotFound from './NotFound'
 
 // Export browser history
 export { history }
@@ -21,6 +22,7 @@ export const routes = (
   <Route path='/' component={Root}>
     <IndexRoute component={Index} />a
     <Route path='analyze' component={Analyze} />
+    <Route path='404' component={NotFound} />
   </Route>
 )
 
@@ -34,17 +36,22 @@ export function renderClientRoute (props) {
   })
 }
 
-export function renderServerRoute (props) {
-  return new Promise((resolve, reject) => {
-    match({ routes, history, ...props }, (err, redirect, routerProps) => {
+export function renderServerRoute (opts) {
+  const props = { routes, history, ...opts }
+  return new Promise(resolve => {
+    match(props, async (err, redirect, routerProps) => {
       if (err) {
-        return reject(err)
+        return resolve(err)
       }
       if (redirect) {
-        return resolve({ redirect: redirect })
+        return resolve({ redirect: redirect, status: 302 })
+      }
+      if (!routerProps) {
+        const result = await renderServerRoute({ ...props, location: '/404' })
+        return resolve({ ...result, status: 404 })
       }
       return resolve({
-        routerProps: routerProps,
+        status: 200,
         html: '<!DOCTYPE html>' + renderToStaticMarkup(
           <Html title='httptest.net' {...props}>
             {renderToString(<RouterContext {...routerProps} />)}
