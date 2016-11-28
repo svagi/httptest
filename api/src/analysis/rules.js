@@ -32,8 +32,8 @@ export function cacheAssets ({ page, entries }) {
   const validReqs = entries.filter(entry =>
     entry.isValid && !entry.isRedirect
   )
-  const values = validReqs.filter(({ isValid, isRedirect, resHeaders }) =>
-    !resHeaders['cache-control'] || !resHeaders['expires']
+  const values = validReqs.filter(({ isValid, isRedirect, resHeaders, url }) =>
+    !resHeaders['cache-control'] && !resHeaders['expires']
   )
   const count = values.length
   const score = 100 - Math.round(100 * (count / validReqs.length))
@@ -53,8 +53,8 @@ export function useCacheValidators ({ page, entries }) {
   const validReqs = entries.filter(entry =>
     entry.isValid && !entry.isRedirect
   )
-  const values = validReqs.filter(({ resHeaders }) =>
-    !(resHeaders['last-modified'] || resHeaders['etag'])
+  const values = validReqs.filter(({ resHeaders, url }) =>
+    !resHeaders['last-modified'] && !resHeaders['etag']
   )
   const count = values.length
   const score = 100 - Math.round(100 * (count / validReqs.length))
