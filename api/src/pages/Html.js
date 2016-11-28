@@ -12,6 +12,8 @@ export default class Html extends React.Component {
           <link type='text/css' rel='stylesheet' href='/app.bundle.css' />
           <link rel='dns-prefetch' href='https://github.com/' />
           <link rel='dns-prefetch' href='https://www.svager.cz/' />
+          <meta name='description' content='Analyze your site’s speed according to HTTP best practices.' />
+          <meta name='author' content='Jan Svager <https://www.svager.cz>' />
         </head>
         <body>
           <div id='app' dangerouslySetInnerHTML={{ __html: this.props.children }} />
