@@ -1,5 +1,6 @@
 import { isWebUri } from 'valid-url'
 import { parse as parseUrl, format as formatUrl } from 'url'
+import { isIP } from 'net'
 import dns from 'dns'
 import etag from 'etag'
 import express from 'express'
@@ -24,10 +25,14 @@ const cache = new Redis({
 const rankings = createRankings(cache)
 
 function validUrlMiddleware (req, res, next) {
-  req.query.url = isWebUri(req.query.url)
-  if (!req.query.url) {
+  const url = isWebUri(req.query.url)
+  if (!url) {
     return res.status(400).end()
   }
+  const parsedUrl = parseUrl(url)
+  parsedUrl.auth = null // remove user name & password
+  res.locals.url = formatUrl(parsedUrl)
+  res.locals.parsedUrl = parsedUrl
   next()
 }
 
@@ -124,10 +129,8 @@ app.get('/events', validUrlMiddleware, sseMiddleware, (req, res) => {
   }
   const query = req.query
   const purge = query.purge
-  const parsedUrl = parseUrl(query.url)
-  parsedUrl.auth = null // remove user name & password
-  const url = formatUrl(parsedUrl)
-  const hostname = parsedUrl.hostname
+  const url = res.locals.url
+  const hostname = res.locals.parsedUrl.hostname
   const useCache = typeof purge === 'undefined'
   // Open SSE connection
   const sse = res.sse.open()
@@ -174,6 +177,12 @@ app.get('/events', validUrlMiddleware, sseMiddleware, (req, res) => {
         return
     }
   })
+  // Check if hostname is IP address
+  if (isIP(hostname)) {
+    sse.emit('error', 'Sorry, IP addresses are not supported. Please, use domain name instead.')
+    res.end()
+    return res.end()
+  }
   // Check if hostname is resolvable
   dns.lookup(hostname, (err) => {
     if (err) {
