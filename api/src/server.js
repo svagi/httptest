@@ -269,7 +269,7 @@ app.get('*', async (req, res) => {
   res.writeHead(status, {
     'Content-Type': 'text/html; charset=utf-8',
     'Content-Length': Buffer.byteLength(html, 'utf-8'),
-    'Cache-Control': 'no-cache',
+    'Cache-Control': 'max-age=180, must-revalidate',
     // Server push hints (supported by cloudflare-nginx)
     // https://w3c.github.io/preload/
     'Link': [
