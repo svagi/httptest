@@ -95,32 +95,19 @@ if (IS_DEV) {
 app.use(morgan('[:date[iso]] :method :url :status HTTP/:http-version :response-time ms'))
 
 // Retrieve analysis
-app.get('/analysis', (req, res) => {
-  return cache.get('analysis:' + req.query.url)
-    .then(analysis => {
-      // analysis exists in cache
-      if (analysis) {
-        return res.status(200).end(analysis)
-      } else {
-        return res.status(404).end()
-      }
-    })
-    .catch(err => {
-      log.error(err)
-      return res.status(500).end()
-    })
-})
-
-// Delete analysis
-app.delete('/analysis', validUrlMiddleware, (req, res) => {
-  return cache.del('analysis:' + req.query.url)
-    .then(() => {
-      return res.status(200).end()
-    })
-    .catch(err => {
-      log.error(err)
-      return res.status(500).end()
-    })
+app.get('/analysis', validUrlMiddleware, async (req, res) => {
+  let analysis
+  try {
+    analysis = await cache.get('analysis:' + res.locals.url)
+  } catch (err) {
+    log.error(err)
+    res.status(500).end()
+  }
+  if (analysis) {
+    res.status(200).json(analysis)
+  } else {
+    res.status(404).end()
+  }
 })
 
 app.get('/events', validUrlMiddleware, sseMiddleware, (req, res) => {
