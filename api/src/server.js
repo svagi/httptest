@@ -20,7 +20,8 @@ const PORT = process.env.NODE_PORT
 const IS_DEV = ENV === 'development'
 const cache = new Redis({
   host: 'cache',
-  showFriendlyErrorStack: IS_DEV
+  showFriendlyErrorStack: IS_DEV,
+  dropBufferSupport: true
 })
 const rankings = createRankings(cache)
 
