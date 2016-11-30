@@ -69,7 +69,7 @@ export default class Index extends React.Component {
             title='Totals'
             rankings={totals}
             count={10}
-            style={{ score: { background: 'none', color: '#333' } }}
+            style={totals && { score: { background: 'none', color: '#333' } }}
             disableLinks />
         </section>
       </div>

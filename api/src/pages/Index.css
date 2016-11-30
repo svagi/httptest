@@ -49,7 +49,11 @@
     border: none;
 }
 
-.rankings-url {
+.rankings.box li.active .score {
+    font-weight: 700;
+}
+
+.rankings.box .url {
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
@@ -58,16 +62,12 @@
     padding-right: .35em;
 }
 
-.rankings-score {
+.rankings.box .score {
     font-size: .8em;
     text-align: center;
     width: 2.2em;
     background-color: #ddd;
     padding: .3em 0;
-}
-
-.rankings.box li.active .rankings-score {
-    font-weight: 700;
 }
 
 @media screen and (min-width: 35.5em) {

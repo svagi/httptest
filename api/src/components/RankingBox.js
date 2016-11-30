@@ -15,17 +15,17 @@ export default function RankingBox (props) {
           const active = typeof url !== 'undefined' && typeof score !== 'undefined'
           const style = {
             score: {
-              color: active ? '#fff' : '#000',
-              background: `hsl(${120 * (score / 100)}, 50%, 50%)`
+              color: active ? '#fff' : null,
+              background: active ? `hsl(${120 * (score / 100)}, 50%, 50%)` : null
             },
             ...props.style
           }
           return (
-            <li key={idx} className={active ? 'active' : ''}>
-              <div className='rankings-url' style={style.url}>
+            <li key={idx} className={active ? 'active' : null}>
+              <div className='url' style={style.url}>
                 {active ? mapUrl(url) : '----------------'}
               </div>
-              <div className='rankings-score' style={style.score}>
+              <div className='score' style={style.score}>
                 {active ? score : '--'}
               </div>
             </li>

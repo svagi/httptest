@@ -50,6 +50,7 @@
 
 #analysis .title {
     font-weight: 500;
+    display: inline-block;
 }
 
 #analysis .rule:last-child {
