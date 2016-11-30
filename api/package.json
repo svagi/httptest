@@ -27,7 +27,7 @@
         "build": "npm run babel:build && npm run webpack:build",
         "lint": "standard src/*",
         "start": "npm run build && node build/server.js",
-        "watch": "npm run nodemon:watch & npm run webpack:watch",
+        "watch": "npm run webpack:build && npm run nodemon:watch & npm run webpack:watch",
         "test": "BABEL_ENV=node ava"
     },
     "ava": {
@@ -44,6 +44,7 @@
         "parser": "babel-eslint"
     },
     "dependencies": {
+        "assets-webpack-plugin": "3.5.0",
         "babel-cli": "6.18.0",
         "babel-loader": "6.2.7",
         "babel-preset-env": "0.0.8",

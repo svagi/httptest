@@ -13,6 +13,7 @@ import { renderServerRoute } from './pages/router'
 import createWorker from './worker'
 import log from './debug'
 import pkg from '../package.json'
+import assets from '/api/build/assets.json'
 
 const app = express()
 const ENV = process.env.NODE_ENV
@@ -258,7 +259,7 @@ app.get('/rankings', sseMiddleware, async (req, res) => {
 })
 
 app.get('*', async (req, res) => {
-  const props = { location: req.originalUrl }
+  const props = { assets, location: req.originalUrl }
   const { error, redirect, html, status } = await renderServerRoute(props)
   if (error) {
     log.error(error)
@@ -274,8 +275,8 @@ app.get('*', async (req, res) => {
     // Server push hints (supported by cloudflare-nginx)
     // https://w3c.github.io/preload/
     'Link': [
-      '</app.bundle.css>; rel=preload; as=style;',
-      '</init.bundle.js>; rel=preload; as=script;'
+      `</${assets.app.css}>; rel=preload; as=style;`,
+      `</${assets.init.js}>; rel=preload; as=script;`
     ],
     'Etag': etag(html)
   })
