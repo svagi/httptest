@@ -8,6 +8,23 @@ function rule (props) {
   return props
 }
 
+export function reduceServerResponseTime ({ page, min = 200, max = 1000 }) {
+  const ttfb = Math.round(page.timeToFirstByte)
+  const threshold = ttfb - min
+  const score = threshold > 0 ? 100 - Math.round(100 * threshold / (max - min)) : 100
+  // TODO latency
+  return rule({
+    count: 1,
+    description: 'Long web server response times delay page loading speeds.',
+    reason: `Server responded in ${ttfb} ms`,
+    score: score,
+    title: 'Improve server response time',
+    type: 'general',
+    values: [],
+    weight: 9
+  })
+}
+
 export function reuseTCPconnections ({ page, entries }) {
   const validReqs = entries.filter(entry =>
     entry.isValid && !entry.isRedirect

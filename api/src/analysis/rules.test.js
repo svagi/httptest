@@ -6,6 +6,14 @@ import { parseHAR } from './analyze'
 domains.forEach(domain => datasets[domain].forEach((har, idx) => {
   const data = parseHAR(har)
 
+  test(`[${idx}|${domain}] reduceServerResponseTime`, (t) => {
+    const result = rules.reduceServerResponseTime(data)
+    t.is(typeof result, 'object')
+    t.true(Array.isArray(result.values))
+    result.values.forEach(val => t.is(typeof val, 'string'))
+    // console.log(result)
+  })
+
   test(`[${idx}|${domain}] reuseTCPconnections`, (t) => {
     const result = rules.reuseTCPconnections(data)
     t.is(typeof result, 'object')
