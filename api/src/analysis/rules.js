@@ -152,7 +152,7 @@ export function eliminateBrokenRequests ({ entries, ...opts }) {
     title: 'Eliminate requests to non-existent or broken resources',
     type: 'general',
     values: values.map(entry => `(${entry.status}) ${entry.url.href}`),
-    weight: 2
+    weight: 1
   })
 }
 
