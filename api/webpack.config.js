@@ -39,7 +39,7 @@ var productionPlugins = [
 ]
 
 module.exports = {
-  devtool: isProduction ? 'hidden' : 'eval',
+  devtool: isProduction ? 'hidden' : 'cheap-source-map',
   entry: {
     app: '/api/src/client.js',
     react: ['react', 'react-dom', 'react-router']
