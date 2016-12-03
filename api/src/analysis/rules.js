@@ -1,5 +1,5 @@
 import _ from 'pluralize'
-import { normalizeScore, normalizeReason, regex } from './helpers'
+import { normalizeScore, normalizeReason, regex, minifyWhitespace } from './helpers'
 
 // Main rule wrapper with properties normalization
 function rule (props) {
@@ -33,7 +33,7 @@ export function reuseTCPconnections ({ page, entries }) {
     !(entry.resHeaders.connection !== 'close')
   )
   const count = values.length
-  const score = 100 - Math.round(100 * (count / validReqs.length))
+  const score = 100 - (Math.round(100 * count / validReqs.length) || 0)
   return rule({
     count: count,
     description: 'Persistent connections allow multiple HTTP requests use the same TCP connection, thus eliminates TCP handshakes and slow-start latency overhead. Leverage persistent connections whenever possible.',
@@ -53,7 +53,7 @@ export function cacheAssets ({ page, entries }) {
     !resHeaders['cache-control'] && !resHeaders['expires']
   )
   const count = values.length
-  const score = 100 - Math.round(100 * (count / validReqs.length))
+  const score = 100 - (Math.round(100 * count / validReqs.length) || 0)
   return rule({
     count: count,
     description: 'Reduce the load time of your page by storing commonly used files on your visitors browser.',
@@ -74,7 +74,7 @@ export function useCacheValidators ({ page, entries }) {
     !resHeaders['last-modified'] && !resHeaders['etag']
   )
   const count = values.length
-  const score = 100 - Math.round(100 * (count / validReqs.length))
+  const score = 100 - (Math.round(100 * count / validReqs.length) || 0)
   return rule({
     count: count,
     description: 'Specify the Last-Modified or Etag header to allow the client to check if the expired resource has been updated, if not data transfer can be omitted.',
@@ -101,7 +101,7 @@ export function compressAssets ({ page, entries, ...opts }) {
     )
   })
   const count = values.length
-  const score = 100 - Math.round(100 * (count / validReqs.length))
+  const score = 100 - (Math.round(100 * count / validReqs.length) || 0)
   return rule({
     count: count,
     description: 'Application resources should be transferred with the minimum number of bytes. Always apply the best compression method for each transferred asset.',
@@ -156,6 +156,43 @@ export function reduceDNSlookups ({ page, ...opts }) {
   })
 }
 
+export function minifyAssets ({ entries, tolerance = 0.05 }) {
+  const validReqs = entries.filter(entry =>
+    entry.isValid && !entry.isRedirect &&
+    entry.content.text && regex.htmlOrJsOrCss.test(entry.content.mimeType)
+  )
+  const values = validReqs
+    .map(entry => {
+      const original = entry.content.text
+      const minified = minifyWhitespace(original)
+      const originalSize = Buffer.byteLength(original, 'utf-8')
+      const minifiedSize = Buffer.byteLength(minified, 'utf-8')
+      entry.minification = {
+        minified: minified,
+        original: original,
+        minifiedSize: minifiedSize,
+        originalSize: originalSize,
+        savings: 100 - Math.round(100 * minifiedSize / originalSize)
+      }
+      return entry
+    })
+    .filter(({ minification: { originalSize, minifiedSize } }) => {
+      return minifiedSize + originalSize * tolerance < originalSize
+    })
+  const count = values.length
+  const score = 100 - (Math.round(100 * count / validReqs.length) || 0)
+  return rule({
+    count: count,
+    description: 'Minification reduces the overall size of resources, thus increasing the loading speed.',
+    reason: `There ${_('is', count)} ${_('resource', count, true)} that can be minified.`,
+    score: score,
+    title: 'Minify recources',
+    type: 'general',
+    values: values.map(entry => `${entry.url.href} (At least ~${entry.minification.savings}% savings)`),
+    weight: 3
+  })
+}
+
 export function eliminateBrokenRequests ({ entries, ...opts }) {
   const { penalty = 10 } = opts
   const values = entries.filter(entry => entry.status >= 400)
@@ -177,13 +214,13 @@ export function useHttp2 ({ entries }) {
   const validReqs = entries.filter(entry => entry.isValid && !entry.isRedirect)
   const values = validReqs.filter(entry => !entry.isHttp2)
   const count = values.length
-  const score = 100 - Math.round(100 * (count / validReqs.length))
+  const score = 100 - (Math.round(100 * count / validReqs.length) || 0)
   return rule({
     count: count,
     description: 'HTTP/2 enables more efficient use of network resources and reduced latency by enabling request and response multiplexing, header compression, prioritization, and more.',
-    reason: `There ${_('is', count)} ${_('resource', count, true)} that are not using HTTP/2 connections`,
+    reason: `There ${_('is', count)} ${_('resource', count, true)} that ${_('is', count)} not using HTTP/2.`,
     score: score,
-    title: 'Serve all resources using HTTP/2',
+    title: 'Serve resources using HTTP/2',
     type: 'h2',
     values: values.map(entry => entry.url.href),
     weight: 4

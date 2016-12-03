@@ -2,6 +2,7 @@
 export const regex = {
   text: /text\/(?:plain|html|css|javascript)|application\/(?:javascript|json|ld\+json|xml|atom\+xml)/i,
   jsOrCss: /text\/(?:css|javascript)|application\/javascript/i,
+  htmlOrJsOrCss: /text\/(?:html|css|javascript)|application\/javascript/i,
   encoding: /compress|gzip|deflate|bzip2/i
 }
 
@@ -78,4 +79,9 @@ export function mul (array = []) {
 // Calculate weighted arithmetic mean
 export function weightedMean (array = []) {
   return sum(array.map(mul)) / sum(array.map(first))
+}
+
+// Remove all whitespace characters except single spaces
+export function minifyWhitespace (str) {
+  return str.replace(/[\t\n\r]+/g, '').replace(/ +/g, ' ')
 }

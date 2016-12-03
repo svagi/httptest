@@ -127,3 +127,11 @@ test('Weighted arithmetic mean from array of weights and scores', (t) => {
   t.is(helpers.weightedMean([[1, 0], [4, 100]]), 80)
   t.is(helpers.weightedMean([[1, 0], [1, 50], [1, 100]]), 50)
 })
+
+test('Minify whitespace', (t) => {
+  t.is(helpers.minifyWhitespace(''), '')
+  t.is(helpers.minifyWhitespace('   '), ' ')
+  t.is(helpers.minifyWhitespace('\t'), '')
+  t.is(helpers.minifyWhitespace('\n'), '')
+  t.is(helpers.minifyWhitespace('\n'), '')
+})

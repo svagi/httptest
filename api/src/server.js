@@ -298,6 +298,7 @@ const worker = createWorker({
     port: 9222,
     userAgent: `Mozilla/5.0 (compatible; ${pkg.name}/${pkg.version}; +${pkg.homepage}) HeadlessChrome`,
     onLoadDelay: 2000,
+    fetchContent: true,
     giveUpTime: 90 // sec
   },
   interval: 500,

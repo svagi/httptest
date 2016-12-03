@@ -62,6 +62,14 @@ domains.forEach(domain => datasets[domain].forEach((har, idx) => {
     // console.log(result)
   })
 
+  test(`[${idx}|${domain}] minifyAssets`, (t) => {
+    const result = rules.minifyAssets(data)
+    t.is(typeof result, 'object')
+    t.true(Array.isArray(result.values))
+    result.values.forEach(val => t.is(typeof val, 'string'))
+    // console.log(result)
+  })
+
   test(`[${idx}|${domain}] eliminateBrokenRequests`, (t) => {
     const result = rules.eliminateBrokenRequests(data)
     t.is(typeof result, 'object')
