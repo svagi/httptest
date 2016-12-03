@@ -32,11 +32,11 @@
 
 #analysis {
     padding: .5em .25em;
-    user-select: none;
 }
 
 #analysis .recommendation .rule>header {
     cursor: pointer;
+    user-select: none;
 }
 
 #analysis .recommendation .rule>header:before {
