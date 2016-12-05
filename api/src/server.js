@@ -25,6 +25,7 @@ const cache = new Redis({
   dropBufferSupport: true
 })
 const rankings = createRankings(cache)
+const TTL_ONE_WEEK = 60 * 60 * 24 * 7
 
 function validUrlMiddleware (req, res, next) {
   const url = isWebUri(req.query.url)
@@ -179,27 +180,22 @@ app.get('/events', validUrlMiddleware, sseMiddleware, (req, res) => {
       return res.end()
     } else {
       // Subscribe to all events
-      subscriber.subscribe(Object.values(events), (err) => {
+      subscriber.subscribe(Object.values(events), async (err) => {
         if (err) {
           log.error(err)
           sse.emit('error')
           return res.end()
         }
         sse.emit('subscribe', url)
-        cache.get(`analysis:${url}`)
-          .then((analysis) => {
-            if (useCache && analysis) {
-              return cache.publish(events.ANALYSIS_DONE, analysis)
-            } else {
-              return cache.lpush('queue', url)
-                .then((count) => cache.publish(events.QUEUE_PUSH, count))
-            }
-          })
-          .catch((err) => {
-            log.error(err)
-            sse.emit('error')
-            res.end()
-          })
+        const key = `analysis:${url}`
+        const analysis = await cache.get(key)
+        if (useCache && analysis) {
+          cache.publish(events.ANALYSIS_DONE, analysis)
+          cache.expire(key, TTL_ONE_WEEK) // refresh
+        } else {
+          const count = await cache.lpush('queue', url)
+          cache.publish(events.QUEUE_PUSH, count)
+        }
       })
     }
   })
@@ -302,6 +298,6 @@ const worker = createWorker({
     giveUpTime: 90 // sec
   },
   interval: 500,
-  ttl: 60 * 60 * 24 * 7 // 1 week
+  ttl: TTL_ONE_WEEK
 })
 worker.processQueue()
