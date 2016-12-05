@@ -7,6 +7,7 @@ services:
   api:
     build: ./api
     container_name: api
+    restart: always
     depends_on:
      - cache
     volumes:
@@ -14,6 +15,7 @@ services:
   proxy:
     build: ./proxy
     container_name: proxy
+    restart: always
     depends_on:
       - api
     volumes:
@@ -24,9 +26,11 @@ services:
   cache:
     build: ./cache
     container_name: cache
+    restart: always
     volumes:
       - cache_data:/data
   chrome:
     build: ./chrome
     container_name: chrome
+    restart: always
     shm_size: 256m
