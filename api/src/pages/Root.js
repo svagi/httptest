@@ -30,10 +30,10 @@ export default class Root extends React.Component {
         <footer>
           <div className='wrapper'>
             <div className='left'>
-              <a href='https://github.com/svagi/httptest' target='_blank'>Source code</a>
+              <a href='https://github.com/svagi/httptest'>Source code</a>
             </div>
             <div className='right'>
-              <a href='https://www.svager.cz' target='_blank'>
+              <a href='https://www.svager.cz'>
                 <span>Made with &#9829; </span><span>{year}</span>
               </a>
             </div>

@@ -75,7 +75,7 @@ export default class Analyze extends React.Component {
       <div id='analyze'>
         <header>
           <h2>Performance analysis of</h2>
-          <h3><a href={url} target='_blank' rel='nofollow'>{url}</a></h3>
+          <h3><a href={url} target='_blank' rel='nofollow noopener'>{url}</a></h3>
           <div id='status'>
             <span>Status: </span>
             <span>{error || status}</span>
