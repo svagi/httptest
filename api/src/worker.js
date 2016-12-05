@@ -6,18 +6,20 @@ export default function createWorker (opts) {
   const { cache, rankings, chromeConfig, interval, ttl, verbose } = opts
   const worker = {
     async processQueue () {
-      const url = await cache.rpop('queue')
-      cache.publish(`queue-pop:${url}`, null)
-      if (url === null) {
-        return setTimeout(worker.processQueue, interval)
-      } else {
+      // it blocks the connection indefinitely when there are no elements
+      const result = await cache.brpop('queue', 0)
+      if (result) {
+        const url = result[1]
+        cache.publish(`queue-pop:${url}`, null)
         try {
           await worker.analyzeUrl(url)
         } catch (err) {
           log.error(err)
         }
         cache.publish(`queue-next`, null)
-        return setImmediate(worker.processQueue)
+        return worker.processQueue()
+      } else {
+        return setTimeout(worker.processQueue, interval)
       }
     },
     async analyzeUrl (url) {
