@@ -38,17 +38,15 @@ export default class Index extends React.Component {
   }
   render () {
     const { latest, best, worst, totals } = this.state
-    const mapUrl = (url) =>
-      <Link to={`/analyze?url=${url}`} title={`Performance analysis of ${url}`}>
+    const makeUrl = url => `/analyze?url=${encodeURIComponent(url)}`
+    const mapUrl = url =>
+      <Link to={makeUrl(url)} title={`Performance analysis of ${url}`}>
         {url}
       </Link>
     return (
       <div id='index'>
         <h2>Analyze your site's performance now</h2>
-        <UrlForm onSubmit={url => history.push({
-          pathname: '/analyze/',
-          search: `?url=${url}`
-        })} />
+        <UrlForm onSubmit={url => history.push(makeUrl(url))} />
         <section id='rankings'>
           <RankingBox
             title='Recent analysis'

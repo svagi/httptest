@@ -23,14 +23,11 @@ export default class Analyze extends React.Component {
     require('./Analyze.css')
     const { url, purge } = this.props.location.query
     if (!url) return history.push('/')
-    const encUrl = encodeURIComponent(url)
-    const useCache = typeof purge === 'undefined'
-    const endpoint = `/events?url=${encUrl}${useCache ? '' : '&purge'}`
+    const useCache = typeof purge === 'undefined' ? '' : '&purge'
+    const endpoint = `/events?url=${encodeURIComponent(url)}${useCache}`
     const source = this.source = new window.EventSource(endpoint)
     source.addEventListener('open', (e) => {
-      this.setState({
-        status: STATUS.CONNECTING
-      })
+      this.setState({ status: STATUS.CONNECTING })
     })
     source.addEventListener('subscribe', (e) => {
       this.setState({ status: STATUS.QUEUING, url: e.data })
@@ -43,10 +40,7 @@ export default class Analyze extends React.Component {
     })
     source.addEventListener('analysis-done', (e) => {
       const data = JSON.parse(e.data)
-      this.setState({
-        status: STATUS.DONE,
-        data: data
-      })
+      this.setState({ status: STATUS.DONE, data: data })
       source.close()
     })
     source.addEventListener('error', (e) => {
