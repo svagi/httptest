@@ -1,5 +1,4 @@
 import { isWebUri } from 'valid-url'
-import { parse as parseUrl, format as formatUrl } from 'url'
 import { isIP } from 'net'
 import dns from 'dns'
 import etag from 'etag'
@@ -9,6 +8,7 @@ import morgan from 'morgan'
 import Redis from 'ioredis'
 
 import { createRankings } from './model'
+import { parseUrl } from './url'
 import { renderServerRoute } from './pages/router'
 import createWorker from './worker'
 import log from './debug'
@@ -33,8 +33,7 @@ function validUrlMiddleware (req, res, next) {
     return res.status(400).end()
   }
   const parsedUrl = parseUrl(url)
-  parsedUrl.auth = null // remove user name & password
-  res.locals.url = formatUrl(parsedUrl)
+  res.locals.url = parsedUrl.formatted
   res.locals.parsedUrl = parsedUrl
   next()
 }

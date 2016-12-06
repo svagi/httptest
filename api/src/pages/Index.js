@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router'
 import { history } from './router'
+import { parseUrl } from '../url'
 import RankingBox from '../components/RankingBox'
 import UrlForm from '../components/UrlForm'
 
@@ -38,7 +39,8 @@ export default class Index extends React.Component {
   }
   render () {
     const { latest, best, worst, totals } = this.state
-    const makeUrl = url => `/analyze?url=${encodeURIComponent(url)}`
+    const makeUrl = url =>
+      `/analyze?url=${encodeURIComponent(parseUrl(url).formatted)}`
     const mapUrl = url =>
       <Link to={makeUrl(url)} title={`Performance analysis of ${url}`}>
         {url}

@@ -1,5 +1,6 @@
 import React, { PropTypes } from 'react'
 import { history } from './router'
+import { parseUrl } from '../url'
 import Analysis from '../components/Analysis'
 
 const STATUS = {
@@ -24,7 +25,8 @@ export default class Analyze extends React.Component {
     const { url, purge } = this.props.location.query
     if (!url) return history.push('/')
     const useCache = typeof purge === 'undefined' ? '' : '&purge'
-    const endpoint = `/events?url=${encodeURIComponent(url)}${useCache}`
+    const formattedUrl = encodeURIComponent(parseUrl(url).formatted)
+    const endpoint = `/events?url=${formattedUrl}${useCache}`
     const source = this.source = new window.EventSource(endpoint)
     source.addEventListener('open', (e) => {
       this.setState({ status: STATUS.CONNECTING })
