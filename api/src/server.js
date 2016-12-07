@@ -1,5 +1,5 @@
-import { isWebUri } from 'valid-url'
 import { isIP } from 'net'
+import { isWebUri } from 'valid-url'
 import dns from 'dns'
 import etag from 'etag'
 import express from 'express'
@@ -15,17 +15,16 @@ import log from './debug'
 import pkg from '../package.json'
 import assets from '/api/build/assets.json'
 
+const { NODE_ENV, NODE_PORT } = process.env
+const PRODUCTION = NODE_ENV === 'production'
+const TTL_ONE_WEEK = 60 * 60 * 24 * 7
 const app = express()
-const ENV = process.env.NODE_ENV
-const PORT = process.env.NODE_PORT
-const IS_DEV = ENV === 'development'
 const cache = new Redis({
   host: 'cache',
-  showFriendlyErrorStack: IS_DEV,
+  showFriendlyErrorStack: !PRODUCTION,
   dropBufferSupport: true
 })
 const rankings = createRankings(cache)
-const TTL_ONE_WEEK = 60 * 60 * 24 * 7
 
 function validUrlMiddleware (req, res, next) {
   const url = isWebUri(req.query.url)
@@ -88,8 +87,8 @@ app.disable('x-powered-by')
 // An identical strong ETag guarantees the response is byte-for-byte the same
 app.set('etag', 'strong')
 
-// Serve static files in development
-if (IS_DEV) {
+// Serve static files only in development
+if (!PRODUCTION) {
   app.use(express.static('/api/static'))
 }
 
@@ -279,15 +278,15 @@ app.get('*', async (req, res) => {
 })
 
 // Start server
-http.createServer(app).listen(PORT, () => {
-  log.info('Server running on port %d in %s mode...', PORT, ENV)
+http.createServer(app).listen(NODE_PORT, () => {
+  log.info('Server running on port %d in %s mode...', NODE_PORT, NODE_ENV)
 })
 
 // Start worker
 const worker = createWorker({
   cache: cache.duplicate(),
   rankings: rankings,
-  verbose: IS_DEV,
+  verbose: !PRODUCTION,
   chromeConfig: {
     host: 'chrome',
     port: 9222,
