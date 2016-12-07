@@ -1,2 +1,2 @@
-api/data/*
+.env
 www/static/*.bundle.*
