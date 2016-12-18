@@ -98,7 +98,9 @@ export function parseHAR ({ log: { pages = [], entries = [] } }) {
       dns: dns,
       dnsLookups: Object.keys(dns).length,
       // TTFB
-      timeToFirstByte: page.pageTimings.onFirstByte
+      timeToFirstByte: page.pageTimings.onFirstByte,
+      // Page status
+      status: page.status
     }
   }
 }

@@ -29,6 +29,10 @@ const db = initDB()
 const analyses = db.createDatabase('analyses')
 const rankings = createRankings(cache)
 
+function isResolvable (hostname) {
+  return new Promise(resolve => dns.lookup(hostname, err => resolve(!err)))
+}
+
 function validUrlMiddleware (req, res, next) {
   const url = isWebUri(req.query.url)
   if (!url) {
@@ -114,14 +118,15 @@ app.get('/analysis', validUrlMiddleware, async (req, res) => {
   }
 })
 
-app.get('/events', validUrlMiddleware, sseMiddleware, (req, res) => {
+app.get('/events', validUrlMiddleware, sseMiddleware, async (req, res) => {
   if (!req.accepts('text/event-stream')) {
     return res.status(406).end()
   }
   const query = req.query
   const purge = query.purge
   const url = res.locals.url
-  const hostname = res.locals.parsedUrl.hostname
+  const parsedUrl = res.locals.parsedUrl
+  const hostname = parsedUrl.hostname
   const useCache = typeof purge === 'undefined'
   // Open SSE connection
   const sse = res.sse.open()
@@ -157,7 +162,7 @@ app.get('/events', validUrlMiddleware, sseMiddleware, (req, res) => {
         res.end()
         return
       case events.ANALYSIS_ERROR:
-        sse.emit('analysis-error')
+        sse.emit('error', message)
         res.end()
         return
       case events.QUEUE_PUSH:
@@ -171,44 +176,40 @@ app.get('/events', validUrlMiddleware, sseMiddleware, (req, res) => {
   // Check if hostname is IP address
   if (isIP(hostname)) {
     sse.emit('error', 'Sorry, IP addresses are not supported. Please, use domain name instead.')
-    res.end()
     return res.end()
   }
   // Check if hostname is resolvable
-  dns.lookup(hostname, (err) => {
+  if (!await isResolvable(hostname)) {
+    sse.emit('error', `Sorry, hostname (${hostname}) could not be resolved.`)
+    return res.end()
+  }
+  // Subscribe to all events
+  subscriber.subscribe(Object.values(events), async (err) => {
     if (err) {
-      sse.emit('error', `Sorry, hostname (${hostname}) could not be resolved.`)
+      log.error(err)
+      sse.emit('error')
       return res.end()
-    } else {
-      // Subscribe to all events
-      subscriber.subscribe(Object.values(events), async (err) => {
-        if (err) {
-          log.error(err)
-          sse.emit('error')
-          return res.end()
-        }
-        sse.emit('subscribe', url)
-        if (useCache) {
-          // Get analysis from the cache
-          const cacheKey = `analysis:${url}`
-          const cacheAnalysis = await cache.get(cacheKey)
-          if (cacheAnalysis) {
-            cache.publish(events.ANALYSIS_DONE, cacheAnalysis)
-            cache.expire(cacheKey, TTL_ONE_WEEK) // refresh
-            return
-          }
-          // Get analysis from the database
-          const dbAnalysis = await analyses.get(url)
-          if (dbAnalysis.ok) {
-            cache.publish(events.ANALYSIS_DONE, dbAnalysis.rawBody)
-            return
-          }
-        }
-        // Generate analysis
-        const count = await cache.lpush('queue', url)
-        cache.publish(events.QUEUE_PUSH, count)
-      })
     }
+    sse.emit('subscribe', url)
+    if (useCache) {
+      // Get analysis from the cache
+      const cacheKey = `analysis:${url}`
+      const cacheAnalysis = await cache.get(cacheKey)
+      if (cacheAnalysis) {
+        cache.publish(events.ANALYSIS_DONE, cacheAnalysis)
+        cache.expire(cacheKey, TTL_ONE_WEEK) // refresh
+        return
+      }
+      // Get analysis from the database
+      const dbAnalysis = await analyses.get(url)
+      if (dbAnalysis.ok) {
+        cache.publish(events.ANALYSIS_DONE, dbAnalysis.rawBody)
+        return
+      }
+    }
+    // Generate analysis
+    const count = await cache.lpush('queue', url)
+    cache.publish(events.QUEUE_PUSH, count)
   })
 })
 

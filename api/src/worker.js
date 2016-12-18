@@ -43,14 +43,19 @@ export default function createWorker (opts) {
       })
       cache.publish(`analysis-start:${url}`, null)
       const analysis = analyze(har)
+      const status = analysis.page.status
       if (analysis) {
-        const json = JSON.stringify(analysis)
-        Promise.all([
-          analyses.save(url, analysis),
-          rankings.save(url, analysis.totalScore),
-          cache.setex(`analysis:${url}`, ttl, json)
-        ])
-        cache.publish(`analysis-done:${url}`, json)
+        if (status === 200) {
+          const json = JSON.stringify(analysis)
+          await Promise.all([
+            analyses.save(url, analysis),
+            rankings.save(url, analysis.totalScore),
+            cache.setex(`analysis:${url}`, ttl, json)
+          ])
+          cache.publish(`analysis-done:${url}`, json)
+        } else {
+          cache.publish(`analysis-error:${url}`, `Sorry, the page can not be analyzed. (status code: ${status})`)
+        }
       } else {
         cache.publish(`analysis-error:${url}`, null)
       }
