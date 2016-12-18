@@ -128,51 +128,33 @@ app.get('/events', validUrlMiddleware, sseMiddleware, async (req, res) => {
   const parsedUrl = res.locals.parsedUrl
   const hostname = parsedUrl.hostname
   const useCache = typeof purge === 'undefined'
-  // Open SSE connection
-  const sse = res.sse.open()
-  // Define URL specific events
   const events = {
     ANALYSIS_DONE: `analysis-done:${url}`,
     ANALYSIS_START: `analysis-start:${url}`,
     ANALYSIS_ERROR: `analysis-error:${url}`,
     HAR_DONE: `har-done:${url}`,
     HAR_START: `har-start:${url}`,
-    QUEUE_POP: 'queue-pop',
-    QUEUE_PUSH: 'queue-push'
+    QUEUE_POP: 'queue-pop'
   }
-  // Register new redis connection
-  const subscriber = cache.duplicate()
-  // Quit subscriber if client or server close connection
-  req.on('close', () => subscriber.quit())
-  res.on('finish', () => subscriber.quit())
-  // Listen on events
-  subscriber.on('message', (channel, message) => {
-    switch (channel) {
-      case events.HAR_START:
-        sse.emit('har-start')
-        return
-      case events.HAR_DONE:
-        sse.emit('har-done')
-        return
-      case events.ANALYSIS_START:
-        sse.emit('analysis-start')
-        return
-      case events.ANALYSIS_DONE:
-        sse.emit('analysis-done', message)
-        res.end()
-        return
-      case events.ANALYSIS_ERROR:
-        sse.emit('error', message)
-        res.end()
-        return
-      case events.QUEUE_PUSH:
-        sse.emit('queue-push', message)
-        return
-      case events.QUEUE_POP:
-        sse.emit('queue-pop')
-        return
+  // Open SSE connection
+  const sse = res.sse.open()
+  // Check if something already exists in cache or database
+  if (useCache) {
+    // Get analysis from the cache
+    const cacheKey = `analysis:${url}`
+    const cacheAnalysis = await cache.get(cacheKey)
+    if (cacheAnalysis) {
+      sse.emit('analysis-done', cacheAnalysis)
+      cache.expire(cacheKey, TTL_ONE_WEEK) // refresh
+      return res.end()
     }
-  })
+    // Get analysis from the database
+    const dbAnalysis = await analyses.get(url)
+    if (dbAnalysis.ok) {
+      sse.emit('analysis-done', dbAnalysis.rawBody)
+      return res.end()
+    }
+  }
   // Check if hostname is IP address
   if (isIP(hostname)) {
     sse.emit('error', 'Sorry, IP addresses are not supported. Please, use domain name instead.')
@@ -183,6 +165,30 @@ app.get('/events', validUrlMiddleware, sseMiddleware, async (req, res) => {
     sse.emit('error', `Sorry, hostname (${hostname}) could not be resolved.`)
     return res.end()
   }
+  // Register new redis connection
+  const subscriber = cache.duplicate()
+  // Quit subscriber if client or server close connection
+  req.on('close', () => subscriber.quit())
+  res.on('finish', () => subscriber.quit())
+  // Listen on global events
+  subscriber.on('message', (channel, message) => {
+    switch (channel) {
+      case events.HAR_START:
+        return sse.emit('har-start')
+      case events.HAR_DONE:
+        return sse.emit('har-done')
+      case events.ANALYSIS_START:
+        return sse.emit('analysis-start')
+      case events.ANALYSIS_DONE:
+        sse.emit('analysis-done', message)
+        return res.end()
+      case events.ANALYSIS_ERROR:
+        sse.emit('error', message)
+        return res.end()
+      case events.QUEUE_POP:
+        return sse.emit('queue-pop')
+    }
+  })
   // Subscribe to all events
   subscriber.subscribe(Object.values(events), async (err) => {
     if (err) {
@@ -190,26 +196,10 @@ app.get('/events', validUrlMiddleware, sseMiddleware, async (req, res) => {
       sse.emit('error')
       return res.end()
     }
-    sse.emit('subscribe', url)
-    if (useCache) {
-      // Get analysis from the cache
-      const cacheKey = `analysis:${url}`
-      const cacheAnalysis = await cache.get(cacheKey)
-      if (cacheAnalysis) {
-        cache.publish(events.ANALYSIS_DONE, cacheAnalysis)
-        cache.expire(cacheKey, TTL_ONE_WEEK) // refresh
-        return
-      }
-      // Get analysis from the database
-      const dbAnalysis = await analyses.get(url)
-      if (dbAnalysis.ok) {
-        cache.publish(events.ANALYSIS_DONE, dbAnalysis.rawBody)
-        return
-      }
-    }
     // Generate analysis
+    sse.emit('subscribe', url)
     const count = await cache.lpush('queue', url)
-    cache.publish(events.QUEUE_PUSH, count)
+    sse.emit('queue-push', count)
   })
 })
 

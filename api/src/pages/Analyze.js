@@ -32,7 +32,10 @@ export default class Analyze extends React.Component {
       this.setState({ status: STATUS.CONNECTING })
     })
     source.addEventListener('subscribe', (e) => {
-      this.setState({ status: STATUS.QUEUING, url: e.data })
+      this.setState({ url: e.data })
+    })
+    source.addEventListener('queue-push', (e) => {
+      this.setState({ status: STATUS.QUEUING })
     })
     source.addEventListener('har-start', (e) => {
       this.setState({ status: STATUS.GENERATING })
