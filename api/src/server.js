@@ -10,6 +10,7 @@ import Redis from 'ioredis'
 import { createRankings } from './model'
 import { parseUrl } from './url'
 import { renderServerRoute } from './pages/router'
+import initDB from './db'
 import createWorker from './worker'
 import log from './debug'
 import pkg from '../package.json'
@@ -24,6 +25,8 @@ const cache = new Redis({
   showFriendlyErrorStack: !PRODUCTION,
   dropBufferSupport: true
 })
+const db = initDB()
+const analyses = db.createDatabase('analyses')
 const rankings = createRankings(cache)
 
 function validUrlMiddleware (req, res, next) {
@@ -185,15 +188,25 @@ app.get('/events', validUrlMiddleware, sseMiddleware, (req, res) => {
           return res.end()
         }
         sse.emit('subscribe', url)
-        const key = `analysis:${url}`
-        const analysis = await cache.get(key)
-        if (useCache && analysis) {
-          cache.publish(events.ANALYSIS_DONE, analysis)
-          cache.expire(key, TTL_ONE_WEEK) // refresh
-        } else {
-          const count = await cache.lpush('queue', url)
-          cache.publish(events.QUEUE_PUSH, count)
+        if (useCache) {
+          // Get analysis from the cache
+          const cacheKey = `analysis:${url}`
+          const cacheAnalysis = await cache.get(cacheKey)
+          if (cacheAnalysis) {
+            cache.publish(events.ANALYSIS_DONE, cacheAnalysis)
+            cache.expire(cacheKey, TTL_ONE_WEEK) // refresh
+            return
+          }
+          // Get analysis from the database
+          const dbAnalysis = await analyses.get(url)
+          if (dbAnalysis.ok) {
+            cache.publish(events.ANALYSIS_DONE, dbAnalysis.rawBody)
+            return
+          }
         }
+        // Generate analysis
+        const count = await cache.lpush('queue', url)
+        cache.publish(events.QUEUE_PUSH, count)
       })
     }
   })
@@ -285,6 +298,7 @@ http.createServer(app).listen(NODE_PORT, () => {
 // Start worker
 const worker = createWorker({
   cache: cache.duplicate(),
+  analyses: analyses,
   rankings: rankings,
   verbose: !PRODUCTION,
   chromeConfig: {

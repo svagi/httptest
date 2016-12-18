@@ -3,13 +3,18 @@ version: "2"
 volumes:
   api_static: {}
   cache_data: {}
+  db_data: {}
 services:
   api:
     build: ./api
     container_name: api
     restart: always
+    environment:
+      - COUCHDB_USER
+      - COUCHDB_PASSWORD
     depends_on:
      - cache
+     - db
     volumes:
       - api_static:/api/static
   proxy:
@@ -29,6 +34,14 @@ services:
     restart: always
     volumes:
       - cache_data:/data
+  db:
+    image: klaemo/couchdb:2.0.0
+    container_name: db
+    environment:
+      - COUCHDB_USER
+      - COUCHDB_PASSWORD
+    volumes:
+      - db_data:/opt/couchdb/data
   chrome:
     build: ./chrome
     container_name: chrome

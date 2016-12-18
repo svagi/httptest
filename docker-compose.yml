@@ -3,6 +3,7 @@ version: "2"
 volumes:
   api_static: {}
   cache_data: {}
+  db_data: {}
 services:
   api:
     build: ./api
@@ -12,8 +13,11 @@ services:
       - NODE_ENV=development
       - NODE_PORT=8000
       - DEBUG
+      - COUCHDB_USER
+      - COUCHDB_PASSWORD
     depends_on:
      - cache
+     - db
     volumes:
       - api_static:/api/static
       - ./api/src:/api/src
@@ -39,6 +43,16 @@ services:
       - cache_data:/data
     ports:
       - "6379:6379" # DEV only!
+  db:
+    image: klaemo/couchdb:2.0.0
+    container_name: db
+    environment:
+      - COUCHDB_USER
+      - COUCHDB_PASSWORD
+    volumes:
+      - db_data:/opt/couchdb/data
+    ports:
+      - "5984:5984" # DEV only!
   chrome:
     build: ./chrome
     container_name: chrome

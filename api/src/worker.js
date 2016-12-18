@@ -3,7 +3,7 @@ import log from './debug'
 import analyze from './analysis/analyze'
 
 export default function createWorker (opts) {
-  const { cache, rankings, chromeConfig, interval, ttl, verbose } = opts
+  const { cache, analyses, rankings, chromeConfig, interval, ttl, verbose } = opts
   const worker = {
     async processQueue () {
       // it blocks the connection indefinitely when there are no elements
@@ -47,9 +47,11 @@ export default function createWorker (opts) {
       if (analysis) {
         const json = JSON.stringify(analysis)
         cache.publish(`analysis-done:${url}`, json)
-        // TODO save the analysis in a different storage (CouchDB?)
-        await cache.setex(`analysis:${url}`, ttl, json)
-        await rankings.save(url, analysis.totalScore)
+        await Promise.all([
+          cache.setex(`analysis:${url}`, ttl, json),
+          analyses.put({ ...analysis, _id: url }),
+          rankings.save(url, analysis.totalScore)
+        ])
       } else {
         cache.publish(`analysis-error:${url}`, null)
       }
