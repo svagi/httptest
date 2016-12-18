@@ -12,7 +12,6 @@ export default class Index extends React.Component {
   }
   componentDidMount () {
     require('./Index.css')
-    if (this.state.mounted) return
     const source = this.source = new window.EventSource('/rankings')
     source.addEventListener('latest', ({ data }) => {
       this.setState({ latest: JSON.parse(data) })

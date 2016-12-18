@@ -1,6 +1,7 @@
 import React, { PropTypes } from 'react'
 import { Circle } from 'rc-progress'
 import Rule from './Rule'
+import labels from '../analysis/labels'
 
 export default class Analysis extends React.Component {
   constructor (props) {
@@ -18,7 +19,7 @@ export default class Analysis extends React.Component {
   mapRules (rules, type) {
     return Object.keys(rules)
       .filter(rule => rules[rule].type === type)
-      .map(rule => <Rule key={rule} {...rules[rule]} />)
+      .map(rule => <Rule key={rule} {...labels[rule]} {...rules[rule]} />)
   }
   componentDidMount () {
     this.raf = window.requestAnimationFrame(this.tick)

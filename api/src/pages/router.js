@@ -20,7 +20,7 @@ export { history }
 
 export const routes = (
   <Route path='/' component={Root}>
-    <IndexRoute component={Index} />a
+    <IndexRoute component={Index} />
     <Route path='analyze' component={Analyze} />
     <Route path='404' component={NotFound} />
   </Route>
