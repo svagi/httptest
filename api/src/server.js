@@ -1,22 +1,20 @@
 import { isIP } from 'net'
-import { isWebUri } from 'valid-url'
-import dns from 'dns'
 import etag from 'etag'
 import express from 'express'
 import http from 'http'
 import morgan from 'morgan'
 import Redis from 'ioredis'
-
 import { createRankings } from './model'
-import { parseUrl } from './url'
+import { isResolvable } from './utils'
 import { renderServerRoute } from './pages/router'
-import initDB from './db'
+import { validUrlMiddleware, sseMiddleware } from './middleware'
+import assets from '/api/build/assets.json'
 import createWorker from './worker'
+import initDB from './db'
 import log from './debug'
 import pkg from '../package.json'
-import assets from '/api/build/assets.json'
 
-const { NODE_ENV, NODE_PORT } = process.env
+const { COUCHDB_USER, COUCHDB_PASSWORD, NODE_ENV, NODE_PORT } = process.env
 const PRODUCTION = NODE_ENV === 'production'
 const TTL_ONE_WEEK = 60 * 60 * 24 * 7
 const app = express()
@@ -25,68 +23,12 @@ const cache = new Redis({
   showFriendlyErrorStack: !PRODUCTION,
   dropBufferSupport: true
 })
-const db = initDB()
+const db = initDB({
+  host: 'db',
+  auth: `${COUCHDB_USER}:${COUCHDB_PASSWORD}`
+})
 const analyses = db.createDatabase('analyses')
 const rankings = createRankings(cache)
-
-function isResolvable (hostname) {
-  return new Promise(resolve => dns.lookup(hostname, err => resolve(!err)))
-}
-
-function validUrlMiddleware (req, res, next) {
-  const url = isWebUri(req.query.url)
-  if (!url) {
-    return res.status(400).end()
-  }
-  const parsedUrl = parseUrl(url)
-  res.locals.url = parsedUrl.formatted
-  res.locals.parsedUrl = parsedUrl
-  next()
-}
-
-function sseMiddleware (req, res, next) {
-  if (!req.accepts('text/event-stream')) {
-    return next()
-  }
-  const TIMEOUT = 15 * 1000
-  let lastId
-  let timer
-  req.on('close', function () {
-    log.debug('SSE: Client close connection')
-    timer = clearTimeout(timer)
-  })
-  res.on('finish', function () {
-    log.debug('SSE: Server finish connection')
-    timer = clearTimeout(timer)
-  })
-  const sse = res.sse = {
-    open () {
-      lastId = 0
-      timer = setTimeout(sse.ping, TIMEOUT)
-      res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-store',
-        'Connection': 'keep-alive',
-        'X-Accel-Buffering': 'no' // turn off proxy buffering
-      })
-      sse.emit('open')
-      return sse
-    },
-    emit (event = 'message', data = 'null') {
-      log.debug(`SSE: emit -> ${lastId}:${event}`)
-      res.write('id: ' + lastId++ + '\n')
-      res.write('event: ' + event + '\n')
-      res.write('data: ' + data + '\n\n')
-      return sse
-    },
-    ping () {
-      sse.emit('ping')
-      timer = setTimeout(sse.ping, TIMEOUT)
-      return sse
-    }
-  }
-  next()
-}
 
 // Turn off extra header
 app.disable('x-powered-by')

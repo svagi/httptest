@@ -2,8 +2,6 @@ import http from 'http'
 import Promise from 'bluebird'
 import log from './debug'
 
-const { COUCHDB_USER, COUCHDB_PASSWORD } = process.env
-
 function request ({ body, ...options }) {
   const promise = new Promise((resolve, reject) => {
     const req = http.request(options, msg => {
@@ -41,9 +39,9 @@ function request ({ body, ...options }) {
 
 export default function initDB (opts = {}) {
   const defaults = {
-    host: opts.host || 'db',
+    host: opts.host || 'localhost',
     port: opts.port || '5984',
-    auth: opts.auth || `${COUCHDB_USER}:${COUCHDB_PASSWORD}`,
+    auth: opts.auth,
     agent: opts.agent || new http.Agent({ keepAlive: true })
   }
   return {
