@@ -37,21 +37,20 @@ export default function createWorker (opts) {
             cache.publish(`har-start:${url}`, null)
           })
           .on('end', function (data) {
-            const json = JSON.stringify(data)
-            cache.publish(`har-done:${url}`, json)
-            resolve({ url: url, data: data, json: json })
+            cache.publish(`har-done:${url}`, JSON.stringify(data))
+            resolve(data)
           })
       })
       cache.publish(`analysis-start:${url}`, null)
-      const analysis = analyze(har.data)
+      const analysis = analyze(har)
       if (analysis) {
         const json = JSON.stringify(analysis)
-        cache.publish(`analysis-done:${url}`, json)
-        await Promise.all([
-          cache.setex(`analysis:${url}`, ttl, json),
-          analyses.put({ ...analysis, _id: url }),
-          rankings.save(url, analysis.totalScore)
+        Promise.all([
+          analyses.save(url, analysis),
+          rankings.save(url, analysis.totalScore),
+          cache.setex(`analysis:${url}`, ttl, json)
         ])
+        cache.publish(`analysis-done:${url}`, json)
       } else {
         cache.publish(`analysis-error:${url}`, null)
       }

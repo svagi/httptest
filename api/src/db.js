@@ -47,15 +47,15 @@ export default function initDB (opts = {}) {
     agent: opts.agent || new http.Agent({ keepAlive: true })
   }
   return {
-    createDatabase (db) {
-      const dbPromise = request({ ...defaults, method: 'PUT', path: `/${db}` })
-      return {
+    createDatabase (name) {
+      const dbPromise = request({ ...defaults, method: 'PUT', path: `/${name}` })
+      const db = {
         async get (docId = '') {
           await dbPromise
           return request({
             ...defaults,
             method: 'GET',
-            path: `/${db}/${encodeURIComponent(docId)}`
+            path: `/${name}/${encodeURIComponent(docId)}`
           })
         },
         async put (doc = {}) {
@@ -63,11 +63,20 @@ export default function initDB (opts = {}) {
           return request({
             ...defaults,
             method: 'PUT',
-            path: `/${db}/${encodeURIComponent(doc._id) || ''}`,
+            path: `/${name}/${encodeURIComponent(doc._id || '')}`,
             body: doc
           })
+        },
+        async save (url, doc) {
+          const { status, body } = await db.get(url)
+          if (status.code === 200) {
+            return db.put({ ...body, doc })
+          } else {
+            return db.put({ ...doc, _id: url })
+          }
         }
       }
+      return db
     }
   }
 }
