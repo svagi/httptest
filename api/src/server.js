@@ -138,10 +138,16 @@ app.get('/events', validUrlMiddleware, sseMiddleware, async (req, res) => {
       sse.emit('error')
       return res.end()
     }
-    // Generate analysis
     sse.emit('subscribe', url)
-    const count = await cache.lpush('queue', url)
-    sse.emit('queue-push', count)
+    // If not already there, add an url to the queue
+    const queue = await cache.lrange('queue', 0, 9)
+    const count = queue.length
+    if (queue.includes(url)) {
+      sse.emit('queue-push', count + 1)
+    } else {
+      await cache.lpush('queue', url)
+      sse.emit('queue-push', count)
+    }
   })
 })
 
