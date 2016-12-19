@@ -37,6 +37,7 @@ services:
   db:
     image: klaemo/couchdb:2.0.0
     container_name: db
+    restart: always
     environment:
       - COUCHDB_USER
       - COUCHDB_PASSWORD
