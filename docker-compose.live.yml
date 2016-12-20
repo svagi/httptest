@@ -35,14 +35,14 @@ services:
     volumes:
       - cache_data:/data
   db:
-    image: klaemo/couchdb:2.0.0
+    image: couchdb:1.6.1
     container_name: db
     restart: always
     environment:
       - COUCHDB_USER
       - COUCHDB_PASSWORD
     volumes:
-      - db_data:/opt/couchdb/data
+      - db_data:/usr/local/var/lib/couchdb
   chrome:
     build: ./chrome
     container_name: chrome

@@ -44,13 +44,13 @@ services:
     ports:
       - "6379:6379" # DEV only!
   db:
-    image: klaemo/couchdb:2.0.0
+    image: couchdb:1.6.1
     container_name: db
     environment:
       - COUCHDB_USER
       - COUCHDB_PASSWORD
     volumes:
-      - db_data:/opt/couchdb/data
+      - db_data:/usr/local/var/lib/couchdb
     ports:
       - "5984:5984" # DEV only!
   chrome:
