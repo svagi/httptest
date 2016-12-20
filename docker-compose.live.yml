@@ -10,6 +10,7 @@ services:
     container_name: api
     restart: always
     environment:
+      - NODE_ENV=production
       - COUCHDB_USER
       - COUCHDB_PASSWORD
     depends_on:
