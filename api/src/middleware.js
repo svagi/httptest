@@ -1,17 +1,13 @@
 import { parseUrl } from './url'
 import log from './debug'
 
-export function validUrlMiddleware (req, res, next) {
-  const url = parseUrl(req.query.url)
-  if (!url) {
-    return res.status(400).json({
-      error: 'Invalid URL address.',
-      message: 'Please use a valid URL address.'
-    })
+export function accept (list) {
+  return function (req, res, next) {
+    if (!req.accepts(list)) {
+      return res.status(406).end()
+    }
+    next()
   }
-  res.locals.url = url.formatted
-  res.locals.parsedUrl = url
-  next()
 }
 
 export function sseMiddleware (req, res, next) {

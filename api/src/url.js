@@ -9,12 +9,19 @@ export function parseUrl (originalUrl) {
   const url = isWebUri(originalUrl)
   if (url) {
     const parser = parse(url)
-    const formatted = format(parser)
     parser.auth = ''
     parser.search = ''
     parser.hash = ''
-    parser.formatted = formatted
-    parser.encoded = encodeURIComponent(formatted)
+    Object.defineProperty(parser, 'formatted', {
+      get () {
+        return format(parser)
+      }
+    })
+    Object.defineProperty(parser, 'encoded', {
+      get () {
+        return encodeURIComponent(parser.formatted)
+      }
+    })
     return parser
   }
 }

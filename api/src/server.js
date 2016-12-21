@@ -5,10 +5,11 @@ import http from 'http'
 import morgan from 'morgan'
 import Redis from 'ioredis'
 import { createRankings } from './model'
-import { isResolvable } from './utils'
-import { renderServerRoute } from './pages/router'
-import { validUrlMiddleware, sseMiddleware } from './middleware'
 import { initStore } from './store'
+import { isResolvable } from './utils'
+import { parseUrl } from './url'
+import { renderServerRoute } from './pages/router'
+import { accept, sseMiddleware } from './middleware'
 import assets from '/api/build/assets.json'
 import createWorker from './worker'
 import initDB from './db'
@@ -46,11 +47,16 @@ if (!PRODUCTION) {
 app.use(morgan('[:date[iso]] :method :url :status HTTP/:http-version :response-time ms'))
 
 // Start a new analysis
-app.post('/analyses', validUrlMiddleware, async (req, res) => {
-  if (!req.accepts('application/json')) {
-    return res.status(406).end()
+app.post('/analyses', accept('application/json'), async (req, res) => {
+  const parsedUrl = parseUrl(req.query.url)
+  if (!parsedUrl) {
+    return res.status(400).json({
+      error: 'Invalid URL address.',
+      message: 'Please, use a valid URL address.'
+    })
   }
-  const { url, parsedUrl: { hostname } } = res.locals
+  const url = parsedUrl.formatted
+  const hostname = parsedUrl.hostname
   // Check if hostname is IP address
   if (isIP(hostname)) {
     return res.status(400).json({
@@ -82,8 +88,16 @@ app.post('/analyses', validUrlMiddleware, async (req, res) => {
     })
 })
 
-app.get('/analyses', validUrlMiddleware, async (req, res) => {
-  const { url, parsedUrl: { hostname } } = res.locals
+app.get('/analyses', accept('application/json'), async (req, res) => {
+  const parsedUrl = parseUrl(req.query.url)
+  if (!parsedUrl) {
+    return res.status(400).json({
+      error: 'Invalid URL address.',
+      message: 'Please, use a valid URL address.'
+    })
+  }
+  const url = parsedUrl.formatted
+  const hostname = parsedUrl.hostname
   // Get analysis from the cache
   const cacheKey = `analysis:${url}`
   const cacheAnalysis = await cache.get(cacheKey)
