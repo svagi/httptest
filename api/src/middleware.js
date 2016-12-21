@@ -1,15 +1,16 @@
-import { isWebUri } from 'valid-url'
 import { parseUrl } from './url'
 import log from './debug'
 
 export function validUrlMiddleware (req, res, next) {
-  const url = isWebUri(req.query.url)
+  const url = parseUrl(req.query.url)
   if (!url) {
-    return res.status(400).end()
+    return res.status(400).json({
+      error: 'Invalid URL address.',
+      message: 'Please use a valid URL address.'
+    })
   }
-  const parsedUrl = parseUrl(url)
-  res.locals.url = parsedUrl.formatted
-  res.locals.parsedUrl = parsedUrl
+  res.locals.url = url.formatted
+  res.locals.parsedUrl = url
   next()
 }
 
@@ -38,7 +39,6 @@ export function sseMiddleware (req, res, next) {
         'Connection': 'keep-alive',
         'X-Accel-Buffering': 'no' // turn off proxy buffering
       })
-      sse.emit('open')
       return sse
     },
     emit (event = 'message', data = 'null') {

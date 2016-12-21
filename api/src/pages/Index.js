@@ -1,53 +1,28 @@
 import React from 'react'
 import { Link } from 'react-router'
+import { connect } from 'react-redux'
+import { actions } from '../store'
 import { history } from './router'
 import { parseUrl } from '../url'
 import RankingBox from '../components/RankingBox'
 import UrlForm from '../components/UrlForm'
 
-export default class Index extends React.Component {
-  constructor (props) {
-    super(props)
-    this.state = {}
-  }
+class Index extends React.Component {
   componentDidMount () {
     require('./Index.css')
-    const source = this.source = new window.EventSource('/rankings')
-    source.addEventListener('latest', ({ data }) => {
-      this.setState({ latest: JSON.parse(data) })
-    })
-    source.addEventListener('best', ({ data }) => {
-      this.setState({ best: JSON.parse(data) })
-    })
-    source.addEventListener('worst', ({ data }) => {
-      this.setState({ worst: JSON.parse(data) })
-    })
-    source.addEventListener('totals', ({ data }) => {
-      const totals = JSON.parse(data)
-      const grandTotal = Object.keys(totals)
-        .reduce((sum, key) => sum + totals[key], 0)
-      this.setState({ totals: totals, grandTotal: grandTotal })
-    })
-    source.addEventListener('error', (e) => {
-      source.close()
-    })
   }
-  componentWillUnmount () {
-    this.source.close()
-    this.source = null
-  }
-  render () {
-    const { latest, best, worst, totals } = this.state
-    const makeUrl = url =>
-      `/analyze?url=${encodeURIComponent(parseUrl(url).formatted)}`
+  render ({ latest, best, worst, totals } = this.props) {
+    const makePath = url =>
+      `/analyze?url=${parseUrl(url).encoded}`
     const mapUrl = url =>
-      <Link to={makeUrl(url)} title={`Performance analysis of ${url}`}>
-        {url}
-      </Link>
+      <Link
+        to={makePath(url)}
+        title={`Performance analysis of ${url}`}
+        children={url} />
     return (
       <div id='index'>
         <h2>Analyze your site's performance now</h2>
-        <UrlForm onSubmit={url => history.push(makeUrl(url))} />
+        <UrlForm onSubmit={url => history.push(makePath(url))} />
         <section id='rankings'>
           <RankingBox
             title='Recent analysis'
@@ -75,3 +50,5 @@ export default class Index extends React.Component {
     )
   }
 }
+
+export default connect(state => state.rankings, actions)(Index)

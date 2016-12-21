@@ -14,8 +14,7 @@ export default class UrlForm extends React.Component {
     if (!/^https?:\/\//i.test(url)) {
       url = 'http://' + url
     }
-    url = isWebUri(url)
-    if (!url) {
+    if (!isWebUri(url)) {
       this.setState({ invalid: true })
       return false
     }

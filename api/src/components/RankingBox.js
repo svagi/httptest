@@ -29,7 +29,7 @@ export default function RankingBox (props) {
                 {active ? score : '--'}
               </div>
             </li>
-      )
+          )
         })}
       </ul>
     </div>

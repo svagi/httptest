@@ -1,75 +1,41 @@
 import React, { PropTypes } from 'react'
 import { history } from './router'
-import { parseUrl } from '../url'
 import Analysis from '../components/Analysis'
+import { parseUrl } from '../url'
+import { connect } from 'react-redux'
+import { actions } from '../store'
 
 const STATUS = {
-  LOADING: 'Loading...',
-  CONNECTING: 'Connecting...',
-  QUEUING: 'Waiting in queue...',
-  GENERATING: 'Generating...',
-  ANALYZING: 'Analyzing...',
-  DONE: 'Analysis complete.',
-  ERROR: 'Sorry, something went wrong.'
+  'connecting': 'Connecting...',
+  'queuing': 'Waiting in the queue...',
+  'analyzing': 'Analyzing...',
+  'complete': 'Analysis complete.',
+  'error': 'Sorry, something went wrong.'
 }
 
-export default class Analyze extends React.Component {
+class Analyze extends React.Component {
   constructor (props) {
     super(props)
     this.state = {
-      status: STATUS.LOADING
+      url: parseUrl(props.location.query.url)
     }
   }
   componentDidMount () {
     require('./Analyze.css')
-    const { url, purge } = this.props.location.query
-    if (!url) return history.push('/')
-    const useCache = typeof purge === 'undefined' ? '' : '&purge'
-    const formattedUrl = encodeURIComponent(parseUrl(url).formatted)
-    const endpoint = `/events?url=${formattedUrl}${useCache}`
-    const source = this.source = new window.EventSource(endpoint)
-    source.addEventListener('open', (e) => {
-      this.setState({ status: STATUS.CONNECTING })
-    })
-    source.addEventListener('subscribe', (e) => {
-      this.setState({ url: e.data })
-    })
-    source.addEventListener('queue-push', (e) => {
-      this.setState({ status: STATUS.QUEUING })
-    })
-    source.addEventListener('har-start', (e) => {
-      this.setState({ status: STATUS.GENERATING })
-    })
-    source.addEventListener('analysis-start', (e) => {
-      this.setState({ status: STATUS.ANALYZING })
-    })
-    source.addEventListener('analysis-done', (e) => {
-      const data = JSON.parse(e.data)
-      this.setState({ status: STATUS.DONE, data: data })
-      source.close()
-    })
-    source.addEventListener('error', (e) => {
-      this.setState({ status: STATUS.ERROR, error: e.data })
-      source.close()
-    })
-  }
-  componentWillUnmount () {
-    this.source.close()
-    this.source = null
-  }
-  contentSwitch (status, props) {
-    switch (status) {
-      case STATUS.DONE:
-        return <Analysis {...props} />
-      case STATUS.ERROR:
-        return null
-      default:
-        return <div id='spinner'><div className='spinner' /></div>
+    const props = this.props
+    const { url } = this.state
+    if (!url) {
+      return history.push('/')
+    }
+    const analysis = props[url.formatted]
+    if (!analysis) {
+      props.getAnalysis(url)
     }
   }
   render (props = this.props) {
-    const url = this.state.url || props.location.query.url
-    const { error, status, data = {} } = this.state
+    const url = this.state.url.formatted
+    const analysis = props.analyses[url] || {}
+    const status = analysis.message || STATUS[analysis.status] || STATUS.connecting
     return (
       <div id='analyze'>
         <header>
@@ -77,10 +43,14 @@ export default class Analyze extends React.Component {
           <h3><a href={url} target='_blank' rel='nofollow noopener'>{url}</a></h3>
           <div id='status'>
             <span>Status: </span>
-            <span>{error || status}</span>
+            <span>{status}</span>
           </div>
         </header>
-        {this.contentSwitch(status, data)}
+        {analysis.status !== 'error' && (
+          analysis.status === 'complete'
+            ? <Analysis {...analysis} />
+            : <div id='spinner'><div className='spinner' /></div>
+        )}
       </div>
     )
   }
@@ -89,3 +59,5 @@ export default class Analyze extends React.Component {
 Analyze.propTypes = {
   location: PropTypes.object.isRequired
 }
+
+export default connect(state => state, actions)(Analyze)

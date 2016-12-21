@@ -14,13 +14,16 @@ function request ({ body, ...options }) {
       msg.on('end', () => {
         resolve({
           ok: msg.statusCode < 400,
+          request: {
+            method: options.method,
+            path: options.path
+          },
           status: {
             code: msg.statusCode,
             message: msg.statusMessage
           },
           headers: headers,
-          rawBody: rawBody,
-          body: JSON.parse(rawBody)
+          body: rawBody
         })
       })
     })
@@ -30,9 +33,10 @@ function request ({ body, ...options }) {
     req.end()
   })
   promise.then((result) => {
+    log.debug(result.request)
     log.debug(result.status)
     log.debug(result.headers)
-    log.debug(result.body)
+    log.debug(JSON.parse(result.body))
   })
   return promise
 }
@@ -68,7 +72,7 @@ export default function initDB (opts = {}) {
         async save (url, doc) {
           const { status, body } = await db.get(url)
           if (status.code === 200) {
-            return db.put({ ...body, doc })
+            return db.put({ ...JSON.parse(body), ...doc })
           } else {
             return db.put({ ...doc, _id: url })
           }

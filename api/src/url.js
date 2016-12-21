@@ -1,14 +1,20 @@
 import { parse, format } from 'url'
+import { isWebUri } from 'valid-url'
 
 /**
  * Parse the url and remove auth, query and hash components
- * string -> object
+ * string -> object || undefined
  */
-export function parseUrl (url) {
-  const parser = parse(url)
-  parser.auth = ''
-  parser.search = ''
-  parser.hash = ''
-  parser.formatted = format(parser)
-  return parser
+export function parseUrl (originalUrl) {
+  const url = isWebUri(originalUrl)
+  if (url) {
+    const parser = parse(url)
+    const formatted = format(parser)
+    parser.auth = ''
+    parser.search = ''
+    parser.hash = ''
+    parser.formatted = formatted
+    parser.encoded = encodeURIComponent(formatted)
+    return parser
+  }
 }

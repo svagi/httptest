@@ -1,4 +1,5 @@
 import React from 'react'
+import { Provider } from 'react-redux'
 import { render } from 'react-dom'
 import { renderToString, renderToStaticMarkup } from 'react-dom/server'
 import history from 'react-router/lib/browserHistory'
@@ -32,7 +33,11 @@ export function renderClientRoute (props) {
       console.err(err)
       return
     }
-    return render(<Router {...routerProps} />, props.element)
+    return render((
+      <Provider store={props.store}>
+        <Router {...routerProps} />
+      </Provider>
+    ), props.element)
   })
 }
 
@@ -54,7 +59,11 @@ export function renderServerRoute (opts) {
       try {
         html = renderToStaticMarkup(
           <Html title='httptest.net' {...props}>
-            {renderToString(<RouterContext {...routerProps} />)}
+            {renderToString(
+              <Provider store={props.store}>
+                <RouterContext {...routerProps} />
+              </Provider>
+            )}
           </Html>
         )
       } catch (err) {

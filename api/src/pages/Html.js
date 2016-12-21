@@ -15,9 +15,9 @@ export default class Html extends React.Component {
         </head>
         <body>
           <div id='app' dangerouslySetInnerHTML={{ __html: children }} />
-          <script src={`/${assets.init.js}`} />
-          <script async defer src={`/${assets.react.js}`} />
-          <script async defer src={`/${assets.app.js}`} />
+          <script defer src={`/${assets.init.js}`} />
+          <script defer src={`/${assets.react.js}`} />
+          <script defer src={`/${assets.app.js}`} />
         </body>
       </html>
     )

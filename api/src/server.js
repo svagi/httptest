@@ -8,6 +8,7 @@ import { createRankings } from './model'
 import { isResolvable } from './utils'
 import { renderServerRoute } from './pages/router'
 import { validUrlMiddleware, sseMiddleware } from './middleware'
+import { initStore } from './store'
 import assets from '/api/build/assets.json'
 import createWorker from './worker'
 import initDB from './db'
@@ -44,91 +45,131 @@ if (!PRODUCTION) {
 // Setup custom morgan format
 app.use(morgan('[:date[iso]] :method :url :status HTTP/:http-version :response-time ms'))
 
-// Retrieve analysis
-app.get('/analysis', validUrlMiddleware, async (req, res) => {
-  let analysis
-  try {
-    analysis = await cache.get('analysis:' + res.locals.url)
-  } catch (err) {
-    log.error(err)
-    res.status(500).end()
-  }
-  if (analysis) {
-    res.status(200).json(analysis)
-  } else {
-    res.status(404).end()
-  }
-})
-
-app.get('/events', validUrlMiddleware, sseMiddleware, async (req, res) => {
-  if (!req.accepts('text/event-stream')) {
+// Start a new analysis
+app.post('/analyses', validUrlMiddleware, async (req, res) => {
+  if (!req.accepts('application/json')) {
     return res.status(406).end()
   }
-  const query = req.query
-  const purge = query.purge
-  const url = res.locals.url
-  const parsedUrl = res.locals.parsedUrl
-  const hostname = parsedUrl.hostname
-  const useCache = typeof purge === 'undefined'
-  const events = {
-    ANALYSIS_DONE: `analysis-done:${url}`,
-    ANALYSIS_START: `analysis-start:${url}`,
-    ANALYSIS_ERROR: `analysis-error:${url}`,
-    HAR_DONE: `har-done:${url}`,
-    HAR_START: `har-start:${url}`,
-    QUEUE_POP: 'queue-pop'
-  }
-  // Open SSE connection
-  const sse = res.sse.open()
-  // Check if something already exists in cache or database
-  if (useCache) {
-    // Get analysis from the cache
-    const cacheKey = `analysis:${url}`
-    const cacheAnalysis = await cache.get(cacheKey)
-    if (cacheAnalysis) {
-      sse.emit('analysis-done', cacheAnalysis)
-      cache.expire(cacheKey, TTL_ONE_WEEK) // refresh
-      return res.end()
-    }
-    // Get analysis from the database
-    const dbAnalysis = await analyses.get(url)
-    if (dbAnalysis.ok) {
-      sse.emit('analysis-done', dbAnalysis.rawBody)
-      return res.end()
-    }
-  }
+  const { url, parsedUrl: { hostname } } = res.locals
   // Check if hostname is IP address
   if (isIP(hostname)) {
-    sse.emit('error', 'Sorry, IP addresses are not supported. Please, use domain name instead.')
-    return res.end()
+    return res.status(400).json({
+      status: 'failed',
+      error: 'Invalid URL address.',
+      message: 'Sorry, IP addresses are not supported. Please, use domain name instead.'
+    })
   }
   // Check if hostname is resolvable
   if (!await isResolvable(hostname)) {
-    sse.emit('error', `Sorry, hostname (${hostname}) could not be resolved.`)
-    return res.end()
+    return res.status(400).json({
+      status: 'failed',
+      error: 'Invalid URL address.',
+      message: `Sorry, domain (${hostname}) could not be resolved.`
+    })
   }
+  // Check if url is already in the queue
+  const queue = await cache.lrange('queue', 0, 9)
+  if (!queue.includes(url)) {
+    // Add url to the queue
+    cache.lpush('queue', url)
+    cache.publish('queue-push', url)
+  }
+  res.status(202)
+    .set({ Location: `/analyses?url=${encodeURIComponent(url)}` })
+    .json({
+      id: url,
+      status: 'accepted'
+    })
+})
+
+app.get('/analyses', validUrlMiddleware, async (req, res) => {
+  const { url, parsedUrl: { hostname } } = res.locals
+  // Get analysis from the cache
+  const cacheKey = `analysis:${url}`
+  const cacheAnalysis = await cache.get(cacheKey)
+  if (cacheAnalysis) {
+    res.writeHead(200, {
+      'Content-Type': 'application/json; charset=utf-8'
+    })
+    res.end(cacheAnalysis)
+    return cache.expire(cacheKey, TTL_ONE_WEEK) // refresh
+  }
+  // Start resolving hostname
+  const isResolvablePromise = isResolvable(hostname)
+  // Check if hostname is IP address
+  if (isIP(hostname)) {
+    return res.status(400).json({
+      error: 'Invalid URL address.',
+      message: 'Sorry, IP addresses are not supported. Please, use domain name instead.'
+    })
+  }
+  // Check if hostname is resolvable
+  if (!await isResolvablePromise) {
+    return res.status(400).json({
+      error: 'Invalid URL address.',
+      message: `Sorry, domain (${hostname}) could not be resolved.`
+    })
+  }
+  // Get analysis from the database
+  const dbAnalysis = await analyses.get(url)
+  if (dbAnalysis.ok) {
+    res.writeHead(200, {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Etag': dbAnalysis.headers.etag
+    })
+    return res.end(dbAnalysis.body)
+  }
+  res.status(404).json({
+    error: 'Not Found',
+    message: 'Analysis was not found.'
+  })
+})
+
+// Retrieve analysis
+app.get('/events', sseMiddleware, async (req, res) => {
+  if (!req.accepts('text/event-stream')) {
+    return res.status(406).end()
+  }
+  const { stringify } = JSON
+  // const useCache = typeof req.query.purge === 'undefined'
+  const events = {
+    ANALYSIS_START: `analysis-start`,
+    ANALYSIS_DONE: `analysis-done`,
+    ANALYSIS_ERROR: `analysis-error`,
+    QUEUE_POP: 'queue-pop',
+    QUEUE_PUSH: 'queue-push',
+    QUEUE_NEXT: 'queue-next'
+  }
+    // Open SSE connection
+  const sse = res.sse.open()
+  const emitRankings = async () => {
+    sse.emit('rankings-latest', stringify(await rankings.getLatest()))
+    sse.emit('rankings-best', stringify(await rankings.getBest()))
+    sse.emit('rankings-worst', stringify(await rankings.getWorst()))
+    sse.emit('rankings-totals', stringify(await rankings.getTotals()))
+  }
+  emitRankings()
   // Register new redis connection
   const subscriber = cache.duplicate()
   // Quit subscriber if client or server close connection
   req.on('close', () => subscriber.quit())
   res.on('finish', () => subscriber.quit())
   // Listen on global events
-  subscriber.on('message', (channel, message) => {
+  subscriber.on('message', async (channel, message) => {
     switch (channel) {
-      case events.HAR_START:
-        return sse.emit('har-start')
-      case events.HAR_DONE:
-        return sse.emit('har-done')
       case events.ANALYSIS_START:
-        return sse.emit('analysis-start')
+        return sse.emit(events.ANALYSIS_START, message)
       case events.ANALYSIS_DONE:
-        sse.emit('analysis-done', message)
-        return res.end()
+        return sse.emit(events.ANALYSIS_DONE, message)
       case events.ANALYSIS_ERROR:
-        sse.emit('error', message)
-        return res.end()
+        return sse.emit('analysis-error', message)
       case events.QUEUE_POP:
-        return sse.emit('queue-pop')
+        sse.emit(events.QUEUE_POP, message)
+        return
+      case events.QUEUE_PUSH:
+        return sse.emit(events.QUEUE_PUSH, message)
+      case events.QUEUE_NEXT:
+        return emitRankings()
     }
   })
   // Subscribe to all events
@@ -138,74 +179,25 @@ app.get('/events', validUrlMiddleware, sseMiddleware, async (req, res) => {
       sse.emit('error')
       return res.end()
     }
-    sse.emit('subscribe', url)
-    // If not already there, add an url to the queue
-    const queue = await cache.lrange('queue', 0, 9)
-    const count = queue.length
-    if (queue.includes(url)) {
-      sse.emit('queue-push', count + 1)
-    } else {
-      await cache.lpush('queue', url)
-      sse.emit('queue-push', count)
-    }
+    sse.emit('subscribe')
   })
 })
 
-app.get('/rankings', sseMiddleware, async (req, res) => {
-  const accepts = req.accepts(['application/json', 'text/event-stream'])
-  if (!accepts) {
+// Retrieve rankings
+app.get('/rankings', async (req, res) => {
+  if (!req.accepts('application/json')) {
     return res.status(406).end()
   }
-  const latest = rankings.getLatest()
-  const best = rankings.getBest()
-  const worst = rankings.getWorst()
-  const totals = rankings.getTotals()
-  const { stringify } = JSON
-  if (accepts === 'text/event-stream') {
-    const sse = res.sse
-    sse.open()
-    sse.emit('latest', stringify(await latest))
-    sse.emit('best', stringify(await best))
-    sse.emit('worst', stringify(await worst))
-    sse.emit('totals', stringify(await totals))
-    // Register new redis connection
-    const subscriber = cache.duplicate()
-    // Quit subscriber if client or server close connection
-    req.on('close', () => subscriber.quit())
-    res.on('finish', () => subscriber.quit())
-    subscriber.subscribe('queue-next', (err) => {
-      if (err) {
-        log.error(err)
-        sse.emit('error')
-        res.end()
-      }
-    })
-    subscriber.on('message', async (channel, message) => {
-      if (channel === 'queue-next') {
-        sse.emit('latest', stringify(await rankings.getLatest()))
-        sse.emit('best', stringify(await rankings.getBest()))
-        sse.emit('worst', stringify(await rankings.getWorst()))
-        sse.emit('totals', stringify(await rankings.getTotals()))
-      }
-    })
-  } else {
-    res.writeHead(200, {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': 'no-store',
-      'X-Accel-Buffering': 'no' // turn off proxy buffering
-    })
-    res.write('{')
-    res.write('"latest":' + stringify(await latest) + ',')
-    res.write('"best":' + stringify(await best) + ',')
-    res.write('"worst":' + stringify(await worst) + ',')
-    res.write('"totals":' + stringify(await totals))
-    res.write('}')
-    res.end()
-  }
+  res.writeHead(200, {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Cache-Control': 'no-store'
+  })
+  res.end(JSON.stringify(await rankings.getAll()))
 })
 
 app.get('*', async (req, res) => {
-  const props = { assets, location: req.originalUrl }
+  const store = initStore()
+  const props = { assets, location: req.originalUrl, store: store }
   const { error, redirect, html, status } = await renderServerRoute(props)
   if (error) {
     log.error(error)
@@ -220,10 +212,7 @@ app.get('*', async (req, res) => {
     'Cache-Control': 'max-age=180, must-revalidate',
     // Server push hints (supported by cloudflare-nginx)
     // https://w3c.github.io/preload/
-    'Link': [
-      `</${assets.app.css}>; rel=preload; as=style;`,
-      `</${assets.init.js}>; rel=preload; as=script;`
-    ],
+    'Link': `</${assets.app.css}>; rel=preload; as=style;`,
     'Etag': etag(html)
   })
   res.end(html)
