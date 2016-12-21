@@ -90,7 +90,17 @@ app.post('/analyses', accept('application/json'), async (req, res) => {
 
 // Retrieve analysis
 app.get('/analyses', accept('application/json'), async (req, res) => {
-  const parsedUrl = parseUrl(req.query.url)
+  // Get analysis from the cache
+  const queryUrl = req.query.url
+  const cacheKey = `analysis:${queryUrl}`
+  const cacheAnalysis = await cache.get(cacheKey)
+  if (queryUrl && cacheAnalysis) {
+    res.type('json')
+    res.send(cacheAnalysis)
+    return cache.expire(cacheKey, TTL_ONE_WEEK) // refresh
+  }
+  // Parse URL
+  const parsedUrl = parseUrl(queryUrl)
   if (!parsedUrl) {
     return res.status(400).json({
       error: 'Invalid URL address.',
@@ -99,14 +109,6 @@ app.get('/analyses', accept('application/json'), async (req, res) => {
   }
   const url = parsedUrl.formatted
   const hostname = parsedUrl.hostname
-  // Get analysis from the cache
-  const cacheKey = `analysis:${url}`
-  const cacheAnalysis = await cache.get(cacheKey)
-  if (cacheAnalysis) {
-    res.type('json')
-    res.send(cacheAnalysis)
-    return cache.expire(cacheKey, TTL_ONE_WEEK) // refresh
-  }
   // Start resolving hostname
   const isResolvablePromise = isResolvable(hostname)
   // Check if hostname is IP address
