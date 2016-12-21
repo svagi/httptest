@@ -88,6 +88,7 @@ app.post('/analyses', accept('application/json'), async (req, res) => {
     })
 })
 
+// Retrieve analysis
 app.get('/analyses', accept('application/json'), async (req, res) => {
   const parsedUrl = parseUrl(req.query.url)
   if (!parsedUrl) {
@@ -102,10 +103,8 @@ app.get('/analyses', accept('application/json'), async (req, res) => {
   const cacheKey = `analysis:${url}`
   const cacheAnalysis = await cache.get(cacheKey)
   if (cacheAnalysis) {
-    res.writeHead(200, {
-      'Content-Type': 'application/json; charset=utf-8'
-    })
-    res.end(cacheAnalysis)
+    res.type('json')
+    res.send(cacheAnalysis)
     return cache.expire(cacheKey, TTL_ONE_WEEK) // refresh
   }
   // Start resolving hostname
@@ -127,11 +126,10 @@ app.get('/analyses', accept('application/json'), async (req, res) => {
   // Get analysis from the database
   const dbAnalysis = await analyses.get(url)
   if (dbAnalysis.ok) {
-    res.writeHead(200, {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Etag': dbAnalysis.headers.etag
-    })
-    return res.end(dbAnalysis.body)
+    res.type('json')
+    res.set('Etag', dbAnalysis.headers.etag)
+    res.send(dbAnalysis.body)
+    return res.end()
   }
   res.status(404).json({
     error: 'Not Found',
@@ -139,7 +137,7 @@ app.get('/analyses', accept('application/json'), async (req, res) => {
   })
 })
 
-// Retrieve analysis
+// Global events
 app.get('/events', sseMiddleware, async (req, res) => {
   if (!req.accepts('text/event-stream')) {
     return res.status(406).end()
