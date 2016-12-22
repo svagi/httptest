@@ -8,73 +8,65 @@ function normalizeZscoreResults (keys, results) {
 
 function normalizeZrangeResults (results) {
   return results.reduce(function (obj, val, idx, arr) {
-    if (idx % 2) obj[arr[idx - 1]] = +val
+    if (idx & 1) obj[arr[idx - 1]] = +val
     return obj
   }, {})
 }
 
 export function createRankings (cache) {
+  const keySorted = 'rankings:sorted'
+  const totalsKeys = [
+    '90 – 100',
+    '80 – 90',
+    '70 – 80',
+    '60 – 70',
+    '50 – 60',
+    '40 – 50',
+    '30 – 40',
+    '20 – 30',
+    '10 – 20',
+    '0 – 10'
+  ]
   const rankings = {
     save (url, score) {
       return cache.pipeline()
         .lrem('rankings:latest', 1, url)
         .lpush('rankings:latest', url)
         .ltrim('rankings:latest', 0, 9)
-        .zadd('rankings:sorted', score, url)
+        .zadd(keySorted, score, url)
         .exec()
     },
     async getLatest () {
-      let pipe = cache.pipeline()
       const urls = await cache.lrange('rankings:latest', 0, 9)
+      let pipe = cache.pipeline()
       urls.forEach(url => {
-        pipe = pipe.zscore('rankings:sorted', url)
+        pipe = pipe.zscore(keySorted, url)
       })
-      const results = await pipe.exec()
-      return normalizeZscoreResults(urls, results)
+      return pipe.exec()
+        .then(results => normalizeZscoreResults(urls, results))
     },
-    async getBest () {
-      const results = await cache.zrevrange('rankings:sorted', 0, 9, 'WITHSCORES')
-      return normalizeZrangeResults(results)
+    getBest () {
+      return cache.zrevrange(keySorted, 0, 9, 'WITHSCORES')
+        .then(normalizeZrangeResults)
     },
-    async getWorst () {
-      const results = await cache.zrange('rankings:sorted', 0, 9, 'WITHSCORES')
-      return normalizeZrangeResults(results)
+    getWorst () {
+      return cache.zrange(keySorted, 0, 9, 'WITHSCORES')
+        .then(normalizeZrangeResults)
     },
     async getTotals () {
-      const key = 'rankings:sorted'
       const results = await cache.pipeline()
-        .zcount(key, 90, 100)
-        .zcount(key, 80, 90)
-        .zcount(key, 70, 80)
-        .zcount(key, 60, 70)
-        .zcount(key, 50, 60)
-        .zcount(key, 40, 50)
-        .zcount(key, 30, 40)
-        .zcount(key, 20, 30)
-        .zcount(key, 10, 20)
-        .zcount(key, 0, 10)
+        .zcount(keySorted, 90, 100)
+        .zcount(keySorted, 80, 90)
+        .zcount(keySorted, 70, 80)
+        .zcount(keySorted, 60, 70)
+        .zcount(keySorted, 50, 60)
+        .zcount(keySorted, 40, 50)
+        .zcount(keySorted, 30, 40)
+        .zcount(keySorted, 20, 30)
+        .zcount(keySorted, 10, 20)
+        .zcount(keySorted, 0, 10)
         .exec()
-      const keys = [
-        '90 – 100',
-        '80 – 90',
-        '70 – 80',
-        '60 – 70',
-        '50 – 60',
-        '40 – 50',
-        '30 – 40',
-        '20 – 30',
-        '10 – 20',
-        '0 – 10'
-      ]
-      return normalizeZscoreResults(keys, results)
-    },
-    async getAll () {
-      return {
-        best: await rankings.getBest(),
-        latest: await rankings.getLatest(),
-        worst: await rankings.getWorst(),
-        totals: await rankings.getTotals()
-      }
+      return normalizeZscoreResults(totalsKeys, results)
     }
   }
   return rankings

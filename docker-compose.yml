@@ -16,6 +16,7 @@ services:
       - COUCHDB_PASSWORD
     depends_on:
      - cache
+     - chrome
      - db
     volumes:
       - api_static:/api/static

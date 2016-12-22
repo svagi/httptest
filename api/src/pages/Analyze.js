@@ -27,7 +27,7 @@ class Analyze extends React.Component {
     if (!url) {
       return history.push('/')
     }
-    const analysis = props[url.formatted]
+    const analysis = props.analyses[url.formatted]
     if (!analysis) {
       props.getAnalysis(url)
     }

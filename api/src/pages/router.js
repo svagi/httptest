@@ -49,7 +49,7 @@ export function renderServerRoute (opts) {
         return resolve({ error: err })
       }
       if (redirect) {
-        return resolve({ redirect: redirect, status: 302 })
+        return resolve({ redirect: redirect, status: 301 })
       }
       if (!routerProps) {
         const result = await renderServerRoute({ ...props, location: '/404' })

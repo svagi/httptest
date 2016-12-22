@@ -1,20 +1,24 @@
-import { parseUrl } from './url'
 import log from './debug'
 
-export function accept (list) {
-  return function (req, res, next) {
-    if (!req.accepts(list)) {
-      return res.status(406).end()
-    }
-    next()
-  }
+// Global events
+export const events = {
+  ANALYSIS_START: 'analysis-start',
+  ANALYSIS_DONE: 'analysis-done',
+  ANALYSIS_ERROR: 'analysis-error',
+  HAR_START: 'har-start',
+  HAR_DONE: 'har-done',
+  QUEUE_POP: 'queue-pop',
+  QUEUE_PUSH: 'queue-push',
+  QUEUE_NEXT: 'queue-next',
+  RANKINS_LATEST: 'rankings-latest',
+  RANKINS_BEST: 'rankings-best',
+  RANKINS_WORST: 'rankings-worst',
+  RANKINS_TOTALS: 'rankings-totals'
 }
 
-export function sseMiddleware (req, res, next) {
-  if (!req.accepts('text/event-stream')) {
-    return next()
-  }
-  const TIMEOUT = 15 * 1000
+// Express middleware
+export function sse (req, res, next) {
+  const TIMEOUT = 20 * 1000 // 20 sec
   let lastId
   let timer
   req.on('close', function () {
@@ -25,29 +29,29 @@ export function sseMiddleware (req, res, next) {
     log.debug('SSE: Server finish connection')
     timer = clearTimeout(timer)
   })
-  const sse = res.sse = {
+  const conn = res.sse = {
     open () {
       lastId = 0
-      timer = setTimeout(sse.ping, TIMEOUT)
+      timer = setTimeout(conn.ping, TIMEOUT)
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-store',
         'Connection': 'keep-alive',
         'X-Accel-Buffering': 'no' // turn off proxy buffering
       })
-      return sse
+      return conn
     },
     emit (event = 'message', data = 'null') {
       log.debug(`SSE: emit -> ${lastId}:${event}`)
       res.write('id: ' + lastId++ + '\n')
       res.write('event: ' + event + '\n')
       res.write('data: ' + data + '\n\n')
-      return sse
+      return conn
     },
     ping () {
-      sse.emit('ping')
-      timer = setTimeout(sse.ping, TIMEOUT)
-      return sse
+      conn.emit('ping')
+      timer = setTimeout(conn.ping, TIMEOUT)
+      return conn
     }
   }
   next()
