@@ -36,6 +36,7 @@ class Analyze extends React.Component {
     const url = this.state.url.formatted
     const analysis = props.analyses[url] || {}
     const status = analysis.message || STATUS[analysis.status] || STATUS.connecting
+    console.log(status)
     return (
       <div id='analyze'>
         <header>

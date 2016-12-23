@@ -1,15 +1,16 @@
+import _ from 'pluralize'
 import { isIP } from 'net'
 import express from 'express'
 import http from 'http'
 import morgan from 'morgan'
 import Redis from 'ioredis'
-import { createRankings } from './model'
 import { initStore } from './store'
 import { accept, isResolvable } from './utils'
 import { parseUrl } from './url'
 import { renderServerRoute } from './pages/router'
 import { events, sse } from './events'
 import assets from '/api/build/assets.json'
+import createModels from './models'
 import createWorker from './worker'
 import initDB from './db'
 import log from './debug'
@@ -29,7 +30,7 @@ const db = initDB({
   auth: `${COUCHDB_USER}:${COUCHDB_PASSWORD}`
 })
 const analyses = db.createDatabase('analyses')
-const rankings = createRankings(cache)
+const { rankings, rateLimit } = createModels(cache)
 
 // Turn off extra header
 app.disable('x-powered-by')
@@ -41,7 +42,21 @@ app.set('etag', 'strong')
 app.use(morgan('[:date[iso]] :method :url :status HTTP/:http-version :response-time ms'))
 
 // Start a new analysis
-app.post('/analyses', accept('json'), async (req, res) => {
+app.post('/api/analyses', accept('json'), async (req, res) => {
+  // Check rate limits
+  const ip = req.get('X-Real-IP') || req.ip
+  const rate = 24
+  const period = 86400 // 1 day
+  const remaining = await rateLimit.check(ip, rate, period)
+  res.set('X-RateLimit-Limit', rate)
+  res.set('X-RateLimit-Remaining', Math.max(0, remaining - 1))
+  if (!remaining) {
+    return res.status(429).json({
+      status: 'failed',
+      error: 'API rate limit exceeded',
+      message: `Sorry, you can create only ${_('analysis', rate, true)} per day.`
+    })
+  }
   const parsedUrl = parseUrl(req.query.url)
   if (!parsedUrl) {
     return res.status(400).json({
@@ -74,7 +89,7 @@ app.post('/analyses', accept('json'), async (req, res) => {
     cache.publish(events.QUEUE_PUSH, url)
   }
   res.status(202)
-    .set({ Location: `/analyses?url=${encodeURIComponent(url)}` })
+    .set({ Location: `/api/analyses?url=${encodeURIComponent(url)}` })
     .json({
       id: url,
       status: 'accepted'
@@ -82,7 +97,7 @@ app.post('/analyses', accept('json'), async (req, res) => {
 })
 
 // Retrieve analysis
-app.get('/analyses', accept('json'), async (req, res) => {
+app.get('/api/analyses', accept('json'), async (req, res) => {
   // Set default Cache Policy – always revalidate
   res.set('Cache-Control', 'must-revalidate')
   // Parse URL
@@ -134,7 +149,7 @@ app.get('/analyses', accept('json'), async (req, res) => {
 })
 
 // Global events
-app.get('/events', accept('text/event-stream'), sse, async (req, res) => {
+app.get('/api/events', accept('text/event-stream'), sse, async (req, res) => {
   // Open SSE connection
   const { emit } = res.sse.open()
   // Immediately emit all rankings
@@ -180,7 +195,7 @@ app.get('/events', accept('text/event-stream'), sse, async (req, res) => {
 })
 
 // Retrieve rankings
-app.get('/rankings', accept('json'), async (req, res) => {
+app.get('/api/rankings', accept('json'), async (req, res) => {
   const best = rankings.getBest()
   const latest = rankings.getLatest()
   const worst = rankings.getWorst()

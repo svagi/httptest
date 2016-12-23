@@ -8,7 +8,7 @@ renderClientRoute({
 })
 
 // Global events
-const source = new window.EventSource('/events')
+const source = new window.EventSource('/api/events')
 const checkOrigin = event => {
   return event.origin.includes(window.location.host)
 }

@@ -1,3 +1,4 @@
+import log from './debug'
 
 function normalizeZscoreResults (keys, results) {
   return keys.reduce(function (obj, key, idx) {
@@ -13,7 +14,7 @@ function normalizeZrangeResults (results) {
   }, {})
 }
 
-export function createRankings (cache) {
+function createRankings (cache) {
   const keySorted = 'rankings:sorted'
   const totalsKeys = [
     '90 – 100',
@@ -70,4 +71,30 @@ export function createRankings (cache) {
     }
   }
   return rankings
+}
+
+function createRateLimit (cache) {
+  return {
+    async check (ip, rate, period) {
+      const timestamp = (Date.now() / (1000 * period)) | 0
+      const key = `ratelimit:${timestamp}|${ip}`
+      const used = +await cache.get(key) + 1
+      const remaining = rate - used
+      log.debug(`ratelimit [${ip}] -> ${used}/${rate}`)
+      if (remaining) {
+        await cache.pipeline()
+          .incr(key)
+          .expire(key, period)
+          .exec()
+      }
+      return remaining
+    }
+  }
+}
+
+export default function (cache, opts = {}) {
+  return {
+    rankings: createRankings(cache),
+    rateLimit: createRateLimit(cache)
+  }
 }

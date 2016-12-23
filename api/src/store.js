@@ -114,7 +114,7 @@ export const actions = {
       data: {
         url: parsedUrl.formatted
       },
-      promise: fetch(`/analyses?url=${parsedUrl.encoded}`)
+      promise: fetch(`/api/analyses?url=${parsedUrl.encoded}`)
         .then(response => {
           return response.json().then(payload => {
             if (response.ok) {
@@ -134,7 +134,7 @@ export const actions = {
       data: {
         url: parsedUrl.formatted
       },
-      promise: fetch(`/analyses?url=${parsedUrl.encoded}`, { method: 'POST' })
+      promise: fetch(`/api/analyses?url=${parsedUrl.encoded}`, { method: 'POST' })
         .then(response => {
           return response.json().then(payload => {
             if (response.ok) {
