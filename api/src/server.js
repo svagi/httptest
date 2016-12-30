@@ -136,16 +136,16 @@ app.get('/api/analyses', accept('json'), async (req, res) => {
   }
   // Get analysis from the database
   const dbAnalysis = await analyses.get(url)
-  if (dbAnalysis.ok) {
+  if (dbAnalysis.status.ok) {
     res.type('json')
     res.set('Etag', dbAnalysis.headers.etag)
     res.send(dbAnalysis.body)
-    return res.end()
+  } else {
+    res.status(404).json({
+      error: 'Not Found',
+      message: 'Analysis was not found.'
+    })
   }
-  res.status(404).json({
-    error: 'Not Found',
-    message: 'Analysis was not found.'
-  })
 })
 
 // Global events

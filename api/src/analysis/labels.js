@@ -8,7 +8,7 @@ export default {
     description: 'Persistent connections allow multiple HTTP requests use the same TCP connection, thus eliminates TCP handshakes and slow-start latency overhead. Leverage persistent connections whenever possible.'
   },
   cacheAssets: {
-    title: 'Cache resources on the client',
+    title: 'Cache resources',
     description: 'Reduce the load time of your page by storing commonly used files on your visitors browser.'
   },
   useCacheValidators: {
@@ -16,11 +16,11 @@ export default {
     description: 'Specify the Last-Modified or Etag header to allow the client to check if the expired resource has been updated, if not data transfer can be omitted.'
   },
   compressAssets: {
-    title: 'Compress resources during transfer',
+    title: 'Compress resources',
     description: 'Application resources should be transferred with the minimum number of bytes. Always apply the best compression method for each transferred asset.'
   },
   reduceRedirects: {
-    title: 'Minimize number of HTTP redirects',
+    title: 'Minimize number of redirects',
     description: 'HTTP redirects impose high latency overhead. The optimal number of redirects is zero.'
   },
   reduceDNSlookups: {
@@ -28,12 +28,12 @@ export default {
     title: 'Reduce DNS lookups'
   },
   minifyAssets: {
-    description: 'Minification reduces the overall size of resources, thus increasing the loading speed.',
-    title: 'Minify recources'
+    title: 'Minify recources',
+    description: 'Minification reduces the overall size of resources, thus increasing the loading speed.'
   },
   eliminateBrokenRequests: {
-    description: 'Avoid fetching content that does not exist.',
-    title: 'Eliminate requests to non-existent or broken resources'
+    title: 'Eliminate requests to non-existent or broken resources',
+    description: 'Avoid fetching content that does not exist.'
   },
   useHttp2: {
     title: 'Serve resources using HTTP/2',

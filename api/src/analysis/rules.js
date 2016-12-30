@@ -60,25 +60,6 @@ export function cacheAssets ({ page, entries }) {
   })
 }
 
-export function useCacheValidators ({ page, entries }) {
-  const validReqs = entries.filter(entry =>
-    entry.isValid && !entry.isRedirect
-  )
-  const values = validReqs.filter(({ resHeaders, url }) =>
-    !resHeaders['last-modified'] && !resHeaders['etag']
-  )
-  const count = values.length
-  const score = 100 - (Math.round(100 * count / validReqs.length) || 0)
-  return rule({
-    count: count,
-    reason: `There ${_('is', count)} ${_('resource', count, true)} without Last-Modified or Etag header`,
-    score: score,
-    type: 'general',
-    values: values.map(val => val.url.href),
-    weight: 5
-  })
-}
-
 export function compressAssets ({ page, entries, ...opts }) {
   const { minSize = 256 } = opts
   const validReqs = entries.filter(entry =>
@@ -123,6 +104,25 @@ export function reduceRedirects ({ page, entries, ...opts }) {
       `(${entry.status} ${entry.statusText || 'Redirect'}) ${entry.url.href} -> ${entry.redirectUrl || '-'}`
     ),
     weight: 7
+  })
+}
+
+export function useCacheValidators ({ page, entries }) {
+  const validReqs = entries.filter(entry =>
+    entry.isValid && !entry.isRedirect
+  )
+  const values = validReqs.filter(({ resHeaders, url }) =>
+    !resHeaders['last-modified'] && !resHeaders['etag']
+  )
+  const count = values.length
+  const score = 100 - (Math.round(100 * count / validReqs.length) || 0)
+  return rule({
+    count: count,
+    reason: `There ${_('is', count)} ${_('resource', count, true)} without Last-Modified or Etag header`,
+    score: score,
+    type: 'general',
+    values: values.map(val => val.url.href),
+    weight: 5
   })
 }
 

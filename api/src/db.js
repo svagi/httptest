@@ -2,42 +2,34 @@ import http from 'http'
 import Promise from 'bluebird'
 import log from './debug'
 
-function request ({ body, ...options }) {
+function request ({ body, encoding = 'utf-8', ...options }) {
   const promise = new Promise((resolve, reject) => {
     const req = http.request(options, msg => {
-      const headers = msg.headers
+      const { statusCode } = msg
       let rawBody = ''
-      msg.setEncoding('utf8')
+      msg.setEncoding(encoding)
       msg.on('data', chunk => {
         rawBody += chunk
       })
       msg.on('end', () => {
         resolve({
-          ok: msg.statusCode < 400,
-          request: {
-            method: options.method,
-            path: options.path
-          },
           status: {
-            code: msg.statusCode,
+            ok: statusCode < 400,
+            code: statusCode,
             message: msg.statusMessage
           },
-          headers: headers,
+          headers: msg.headers,
           body: rawBody
         })
       })
     })
+    req.on('error', reject)
     if (body) {
-      req.write(JSON.stringify(body), 'utf-8')
+      req.write(body, encoding)
     }
     req.end()
   })
-  promise.then((result) => {
-    log.debug(result.request)
-    log.debug(result.status)
-    log.debug(result.headers)
-    log.debug(JSON.parse(result.body))
-  })
+  promise.then(log.debug)
   return promise
 }
 
@@ -46,32 +38,44 @@ export default function initDB (opts = {}) {
     host: opts.host || 'localhost',
     port: opts.port || '5984',
     auth: opts.auth,
-    agent: opts.agent || new http.Agent({ keepAlive: true })
+    agent: opts.agent || new http.Agent({ keepAlive: true }),
+    headers: {
+      Accept: 'application/json'
+    }
   }
   return {
     createDatabase (name) {
-      const dbPromise = request({ ...defaults, method: 'PUT', path: `/${name}` })
       const db = {
-        async get (docId = '') {
-          await dbPromise
+        promise: request({
+          ...defaults,
+          method: 'PUT',
+          path: `/${name}`
+        }),
+        get (docId = '') {
           return request({
             ...defaults,
             method: 'GET',
             path: `/${name}/${encodeURIComponent(docId)}`
           })
         },
-        async put (doc = {}) {
-          await dbPromise
+        put (doc = {}) {
+          const id = doc._id || ''
+          const body = JSON.stringify(doc)
           return request({
             ...defaults,
             method: 'PUT',
-            path: `/${name}/${encodeURIComponent(doc._id || '')}`,
-            body: doc
+            path: `/${name}/${encodeURIComponent(id)}`,
+            headers: {
+              ...defaults.headers,
+              'Content-Type': 'application/json',
+              'Content-Length': Buffer.byteLength(body)
+            },
+            body: body
           })
         },
-        async save (url, doc) {
+        async save (url, doc = {}) {
           const { status, body } = await db.get(url)
-          if (status.code === 200) {
+          if (status.ok) {
             return db.put({ ...JSON.parse(body), ...doc })
           } else {
             return db.put({ ...doc, _id: url })
