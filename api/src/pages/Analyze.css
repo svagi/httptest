@@ -73,6 +73,19 @@
     font-size: .8em
 }
 
+button.reload::before {
+    content: "↻";
+    font-size: 1em;
+    padding-right: .3em;
+}
+
+button.reload {
+    padding: .1em .3em;
+    border: 1px solid #999;
+    background: #fff;
+    margin-top: .6em;
+}
+
 #score {
     position: relative;
     width: 15em;

@@ -1,4 +1,5 @@
 import React, { PropTypes } from 'react'
+import { Link } from 'react-router'
 import { history } from './router'
 import Analysis from '../components/Analysis'
 import { parseUrl } from '../url'
@@ -19,6 +20,8 @@ class Analyze extends React.Component {
     this.state = {
       url: parseUrl(props.location.query.url)
     }
+    this.handleRefresh = this.handleRefresh.bind(this)
+    this.handleReTest = this.handleReTest.bind(this)
   }
   componentDidMount () {
     require('./Analyze.css')
@@ -32,6 +35,12 @@ class Analyze extends React.Component {
       props.getAnalysis(url)
     }
   }
+  handleRefresh () {
+    window.location.reload()
+  }
+  handleReTest () {
+    this.props.createAnalysis(this.state.url)
+  }
   render (props = this.props) {
     const url = this.state.url.formatted
     const analysis = props.analyses[url] || {}
@@ -40,11 +49,19 @@ class Analyze extends React.Component {
       <div id='analyze'>
         <header>
           <h2>Performance analysis of</h2>
-          <h3><a href={url} target='_blank' rel='nofollow noopener'>{url}</a></h3>
+          <h3>
+            <a href={url} target='_blank' rel='nofollow noopener'>{url}</a>
+          </h3>
           <div id='status'>
             <span>Status: </span>
             <span>{status}</span>
           </div>
+          {analysis.status === 'error' && (
+            <button className='reload' onClick={this.handleRefresh}>Re-fresh</button>
+          )}
+          {analysis.status === 'complete' && (
+            <button className='reload' onClick={this.handleReTest}>Re-test</button>
+          )}
         </header>
         {analysis.status !== 'error' && (
           analysis.status === 'complete'
