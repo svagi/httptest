@@ -3,7 +3,7 @@ import React, { PropTypes } from 'react'
 export default class Html extends React.Component {
   render ({ children, assets, title } = this.props) {
     return (
-      <html>
+      <html lang='en'>
         <head>
           <title>{title}</title>
           <meta name='viewport' content='width=device-width, initial-scale=1' />
