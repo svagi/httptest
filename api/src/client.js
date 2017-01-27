@@ -1,12 +1,16 @@
 const { renderClientRoute } = require('./pages/router')
 const { initStore, actions } = require('./store.js')
-
-const store = initStore()
+const localStorage = window.localStorage
+const initialState = JSON.parse(localStorage.getItem('httptest')) || undefined
+const store = initStore(initialState)
 renderClientRoute({
   store: store,
   element: document.getElementById('app')
 })
-
+window.onbeforeunload = () => {
+  const state = store.getState()
+  localStorage.setItem('httptest', JSON.stringify(state))
+}
 // Global events
 const source = new window.EventSource('/api/events')
 const checkOrigin = event => {

@@ -1,7 +1,7 @@
 import React from 'react'
 import { Provider } from 'react-redux'
 import { render } from 'react-dom'
-import { renderToString, renderToStaticMarkup } from 'react-dom/server'
+import { renderToStaticMarkup } from 'react-dom/server'
 import history from 'react-router/lib/browserHistory'
 import IndexRoute from 'react-router/lib/IndexRoute'
 import match from 'react-router/lib/match'
@@ -59,7 +59,7 @@ export function renderServerRoute (opts) {
       try {
         html = renderToStaticMarkup(
           <Html title='httptest.net' {...props}>
-            {renderToString(
+            {renderToStaticMarkup(
               <Provider store={props.store}>
                 <RouterContext {...routerProps} />
               </Provider>

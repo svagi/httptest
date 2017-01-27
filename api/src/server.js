@@ -216,10 +216,18 @@ if (!PRODUCTION) {
 
 // Render HTML
 app.get('*', accept('html'), async (req, res) => {
+  const initialState = req.url !== '/' ? undefined : {
+    rankings: {
+      best: await rankings.getBest(),
+      latest: await rankings.getLatest(),
+      worst: await rankings.getWorst(),
+      totals: await rankings.getTotals()
+    }
+  }
   const { error, redirect, html, status } = await renderServerRoute({
     assets: assets,
     location: req.originalUrl,
-    store: initStore()
+    store: initStore(initialState)
   })
   if (error) {
     log.error(error)
