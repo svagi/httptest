@@ -39,12 +39,12 @@
     user-select: none;
 }
 
-#analysis .recommendation .rule>header:before {
+#analysis .recommendation .rule>header .title:before {
     content: '▶';
     padding-right: .5em;
 }
 
-#analysis .recommendation .rule>header.active:before {
+#analysis .recommendation .rule>header.active .title:before {
     content: '▼';
 }
 
@@ -73,7 +73,7 @@
     font-size: .8em
 }
 
-button.reload::before {
+button.reload:before {
     content: "↻";
     font-size: 1em;
     padding-right: .3em;
