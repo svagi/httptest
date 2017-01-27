@@ -11,6 +11,7 @@
     margin-bottom: 5px;
     border-radius: 0;
     -webkit-appearance: none;
+    box-shadow: none;
 }
 
 #index input:focus {

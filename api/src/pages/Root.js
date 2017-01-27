@@ -4,14 +4,9 @@ import Link from 'react-router/lib/Link'
 const year = new Date().getFullYear()
 
 export default class Root extends React.Component {
-  constructor (props) {
-    super(props)
-  }
-
   componentDidMount () {
     require('./Root.css')
   }
-
   render () {
     return (
       <div id='root'>
