@@ -1,15 +1,17 @@
 const { renderClientRoute } = require('./pages/router')
 const { initStore, actions } = require('./store.js')
 const localStorage = window.localStorage
-const initialState = JSON.parse(localStorage.getItem('httptest')) || undefined
-const store = initStore(initialState)
+const store = initStore({
+  rankings: JSON.parse(localStorage.getItem('httptest-rankings')) || undefined
+})
 renderClientRoute({
   store: store,
   element: document.getElementById('app')
 })
 window.onbeforeunload = () => {
   const state = store.getState()
-  localStorage.setItem('httptest', JSON.stringify(state))
+  // TODO store analyses aswell
+  localStorage.setItem('httptest-rankings', JSON.stringify(state.rankings))
 }
 // Global events
 const source = new window.EventSource('/api/events')

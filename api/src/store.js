@@ -40,7 +40,6 @@ function requestStatePromise (store) {
 export const initialState = {
   analyses: {},
   rankings: {
-    isEmpty: true,
     latest: {},
     best: {},
     worst: {},
@@ -95,7 +94,6 @@ export const reducer = combineReducers({
     switch (type) {
       case 'save-rankings':
         return {
-          isEmpty: false,
           latest: data.latest || state.latest,
           best: data.best || state.best,
           worst: data.worst || state.worst,
