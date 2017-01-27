@@ -207,7 +207,7 @@ export function useHttp2 ({ entries }) {
   })
 }
 
-export function eliminateDomainSharding ({ page, entries, opts = {} }) {
+export function eliminateDomainSharding ({ entries, opts = {} }) {
   const { penalty = 20, limit = 1 } = opts
   const h2entries = entries.filter(entry =>
     entry.isHttp2 &&
@@ -222,36 +222,39 @@ export function eliminateDomainSharding ({ page, entries, opts = {} }) {
     }, {})
   const values = Object.keys(reverseDns)
   const count = values.length - limit
-  const score = h2entries.length > 0 ? 100 - (count * penalty) : null
   return rule({
     count: count,
-    score: score,
+    score: h2entries.length > 0 ? 100 - (count * penalty) : null,
     type: 'h2',
     values: values.map(ip => `${ip} -> ${[...reverseDns[ip]].join(', ')}`),
     weight: 4
   })
 }
 
-export function avoidConcatenating ({ page, entries, ...opts }) {
+export function avoidConcatenating ({ entries, ...opts }) {
   const { maxSize = 70000, penalty = 5 } = opts
-  const values = entries.filter(entry =>
+  const h2entries = entries.filter(entry =>
     entry.isHttp2 &&
     entry.isValid &&
+    !entry.isRedirect
+  )
+  const values = h2entries.filter(entry =>
     entry.content.size >= maxSize &&
     regex.jsOrCss.test(entry.content.mimeType)
   )
+  // TODO detect image sprites
   const count = values.length
   return rule({
     count: count,
     reason: `There ${_('is', count)} ${_('resource', count, true)} that should avoid concatenating.`,
-    score: page.isHttp2 ? 100 - (penalty * count) : null,
+    score: h2entries.length > 0 ? 100 - (penalty * count) : null,
     type: 'h2',
     values: values.map(entry => `${entry.url.href} (${entry.content.size} Bytes)`),
     weight: 2
   })
 }
 
-export function useServerPush ({ page, entries, ...opts }) {
+export function useServerPush ({ entries, ...opts }) {
   const { maxSize = 5000 } = opts
   const values = entries.filter(entry => (
     entry.isValid &&
