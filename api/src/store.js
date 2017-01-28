@@ -55,7 +55,7 @@ export const reducer = combineReducers({
           ...state,
           [data.url]: {
             ...payload,
-            status: payload.type === 'create-analysis-success' ? 'queuing' : 'complete'
+            status: payload.type === 'create-analysis-success' ? 'connecting' : 'complete'
           }
         }
       case 'get-analysis-failure':
@@ -65,11 +65,6 @@ export const reducer = combineReducers({
             ...payload,
             status: 'error'
           }
-        }
-      case 'create-analysis-success':
-        return {
-          ...state,
-          [data.url]: { ...state[data.url], status: 'queuing' }
         }
       case 'create-analysis-failure':
         return {

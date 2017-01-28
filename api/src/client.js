@@ -38,6 +38,10 @@ source.addEventListener('rankings-totals', event => {
   if (!checkOrigin(event)) return
   store.dispatch(actions.saveRankings({ totals: JSON.parse(event.data) }))
 })
+source.addEventListener('queue-push', event => {
+  if (!checkOrigin(event)) return
+  store.dispatch(actions.updateAnalysisStatus('queuing', event.data))
+})
 source.addEventListener('queue-pop', event => {
   if (!checkOrigin(event)) return
   store.dispatch(actions.updateAnalysisStatus('analyzing', event.data))
