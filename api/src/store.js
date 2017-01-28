@@ -53,23 +53,17 @@ export const reducer = combineReducers({
       case 'get-analysis-success':
         return {
           ...state,
-          [data.url]: {
-            ...payload,
-            status: payload.type === 'create-analysis-success' ? 'connecting' : 'complete'
-          }
+          [data.url]: payload
         }
       case 'get-analysis-failure':
         return {
           ...state,
-          [data.url]: {
-            ...payload,
-            status: 'error'
-          }
+          [data.url]: payload
         }
       case 'create-analysis-failure':
         return {
           ...state,
-          [data.url]: { ...payload, status: 'error' }
+          [data.url]: payload
         }
       case 'save-analysis':
         return {
@@ -79,7 +73,7 @@ export const reducer = combineReducers({
       case 'update-analysis-status':
         return {
           ...state,
-          [data.url]: { ...state[data.url], status: data.status }
+          [data.url]: { ...state[data.url], status: data.status, message: data.message }
         }
       default:
         return state
@@ -111,12 +105,17 @@ export const actions = {
         .then(response => {
           return response.json().then(payload => {
             if (response.ok) {
-              return payload
+              return { ...payload, status: 'complete' }
+            } else {
+              if (response.status === 404) {
+                // Create a new analysis
+                // and overwrite "Not Found" message in payload response
+                dispatch(actions.createAnalysis(parsedUrl))
+                return Promise.reject({ ...payload, status: 'connecting', message: null })
+              } else {
+                return Promise.reject({ ...payload, status: 'error' })
+              }
             }
-            if (response.status === 404) {
-              return dispatch(actions.createAnalysis(parsedUrl))
-            }
-            return Promise.reject({ ...response, ...payload })
           })
         })
     })
@@ -131,9 +130,9 @@ export const actions = {
         .then(response => {
           return response.json().then(payload => {
             if (response.ok) {
-              return payload
+              return { ...payload, status: 'complete' }
             } else {
-              return Promise.reject({ ...response, ...payload })
+              return Promise.reject({ ...payload, status: 'error' })
             }
           })
         })
@@ -148,13 +147,10 @@ export const actions = {
       }
     }
   },
-  updateAnalysisStatus (status, url) {
+  updateAnalysisStatus (data) {
     return {
       type: `update-analysis-status`,
-      data: {
-        url: url,
-        status: status
-      }
+      data: data
     }
   },
   saveRankings (data) {

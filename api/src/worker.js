@@ -21,7 +21,10 @@ export default function createWorker (opts) {
     async analyzeUrl (url) {
       const handleError = (err) => {
         log.debug(err)
-        cache.publish(events.ANALYSIS_ERROR, url)
+        cache.publish(events.ANALYSIS_ERROR, JSON.stringify({
+          status: 'error',
+          url: url
+        }))
       }
       // Start loading URL in chrome
       const har = await new Promise((resolve) => {
@@ -51,10 +54,17 @@ export default function createWorker (opts) {
           ])
           cache.publish(events.ANALYSIS_DONE, json)
         } else {
-          cache.publish(events.ANALYSIS_ERROR, `Sorry, the page can not be analyzed. (status code: ${status})`)
+          cache.publish(events.ANALYSIS_ERROR, JSON.stringify({
+            status: 'error',
+            message: `Sorry, the page can not be analyzed. (status code: ${status})`,
+            url: url
+          }))
         }
       } else {
-        cache.publish(events.ANALYSIS_ERROR, null)
+        cache.publish(events.ANALYSIS_ERROR, JSON.stringify({
+          status: 'error',
+          url: url
+        }))
       }
     }
   }

@@ -1,5 +1,4 @@
 import React, { PropTypes } from 'react'
-import { Link } from 'react-router'
 import { history } from './router'
 import Analysis from '../components/Analysis'
 import { parseUrl } from '../url'
