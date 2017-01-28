@@ -17,7 +17,8 @@ class Analyze extends React.Component {
   constructor (props) {
     super(props)
     this.state = {
-      url: parseUrl(props.location.query.url)
+      url: parseUrl(props.location.query.url),
+      reload: false
     }
     this.handleRefresh = this.handleRefresh.bind(this)
     this.handleReTest = this.handleReTest.bind(this)
@@ -35,13 +36,17 @@ class Analyze extends React.Component {
     }
   }
   handleRefresh () {
+    this.setState({ reloading: true })
     window.location.reload()
   }
   handleReTest () {
-    this.props.createAnalysis(this.state.url)
+    this.setState({ reloading: true })
+    this.props.createAnalysis(this.state.url).then(() => {
+      this.setState({ reloading: false })
+    })
   }
-  render (props = this.props) {
-    const url = this.state.url.formatted
+  render (props = this.props, state = this.state) {
+    const url = state.url.formatted
     const analysis = props.analyses[url] || {}
     const status = analysis.message || STATUS[analysis.status] || STATUS.connecting
     return (
@@ -56,10 +61,14 @@ class Analyze extends React.Component {
             <span>{status}</span>
           </div>
           {analysis.status === 'error' && (
-            <button className='reload' onClick={this.handleRefresh}>Re-fresh</button>
+            <button className='reload' onClick={this.handleRefresh}>
+              {state.reloading ? 'Re-freshing...' : 'Re-fresh'}
+            </button>
           )}
           {analysis.status === 'complete' && (
-            <button className='reload' onClick={this.handleReTest}>Re-test</button>
+            <button className='reload' onClick={this.handleReTest}>
+              {state.reloading ? 'Re-testing...' : 'Re-test' }
+            </button>
           )}
         </header>
         {analysis.status !== 'error' && (
