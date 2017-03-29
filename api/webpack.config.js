@@ -1,5 +1,4 @@
 var webpack = require('webpack')
-var autoprefixer = require('autoprefixer')
 var AssetsPlugin = require('assets-webpack-plugin')
 var CompressionPlugin = require('compression-webpack-plugin')
 var ExtractTextPlugin = require('extract-text-webpack-plugin')
@@ -57,7 +56,6 @@ module.exports = {
   resolve: {
     extensions: ['', '.js']
   },
-  postcss: [ autoprefixer({ browsers: ['last 2 versions'] }) ],
   module: {
     loaders: [
       {
@@ -67,7 +65,10 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        loader: ExtractTextPlugin.extract('style', 'css', 'postcss'),
+        loader: ExtractTextPlugin.extract(
+          'style',
+          'css?-autoprefixer!postcss'
+        ),
         include: ['/api/src']
       }
     ]
